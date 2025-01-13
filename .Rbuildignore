@@ -1,2 +1,13 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
+ignore/
+R_ignore/
+LICENSE.md
+^inst/extdata/.*/~\$
+^codecov\.yml$
+^\.github$
+^README\.Rmd$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
+^index.md$
