@@ -18,3 +18,7 @@ This package contains functions that...
 - Compare a position string against a variant string to look for a match (useful in denominator calculation).
 - Convert a variant and position strings into an ordered versions.
 - Extract all single-locus variants from a variant string.
+
+## Release history
+
+The current version is 1.0.0, released 14 Jan 2025.
