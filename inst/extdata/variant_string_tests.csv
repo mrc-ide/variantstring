@@ -1,6 +1,6 @@
 ﻿string,allowed,notes
-mdr_1:1:A,F,invalid characters in gene name
-crt:1:A;-mrd1:1:A,F,hyphen at start of gene name
+crt:1:A;-mrd1:1:A,F,hyphen not allowed at start of gene name
+crt:1:A;_mrd1:1:A,F,underscore not allowed at start of gene name
 crt:1:A;mrd1:1:A;,F,hanging semicolon
 crt:1:A:,F,hanging colon
 crt:1::A,F,extra colon
@@ -22,9 +22,10 @@ crt:1:A|C;mdr1:1:A|C|D,F,inconsistent number of phased amino acids between genes
 crt:1:A/A,F,repeated amino acid at unphased heterozygous locus
 crt:1:A|A,F,repeated amino acid at phased heterozygous locus
 crt:1:A;crt:2:A,F,duplicate gene names
+mdr-1:1:A,T,hyphen allowed in gene name
+mdr_1:1:A,T,underscore allowed in gene name
 crt:1:A,T,single locus format
 crt:1_2:A_A,T,multiple locus format
 crt:1_2:AA,T,shorthand amino acids
-mdr-1:1:A,T,hyphen in gene name
 crt:1:A;mrd-1:1:A,T,hyphen in multigene name
 crt:1_2_3:A/C_A|C_A/C/D,T,"mixed phased and unphased hets, with variable degree in unphased hets"
