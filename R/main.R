@@ -371,6 +371,64 @@ position_from_variant_string <- function(x) {
 }
 
 #------------------------------------------------
+#' @title Reorders a variant string in alphabetical order of genes
+#'
+#' @description
+#' Reorders a variant string in alphabetical order of genes. This can be useful
+#' when checking for duplicated strings, as it allows us to account for the same
+#' genes being present in a different order.
+#'
+#' @param x a character string or vector of character strings.
+#'
+#' @export
+
+order_variant_string <- function(x) {
+
+  # checks
+  stopifnot(all(is.character(x)))
+  check_variant_string(x)
+
+  # sort genes in alphabetical order
+  ret <- mapply(function(s1) {
+    gene_names <- mapply(function(s2) s2[1], strsplit(s1, ":"))
+    s1[order(gene_names)] |>
+      paste(collapse = ";")
+  }, strsplit(x, ";"))
+
+
+  return(ret)
+}
+
+#------------------------------------------------
+#' @title Reorders a position string in alphabetical order of genes
+#'
+#' @description
+#' Reorders a position string in alphabetical order of genes. This can be useful
+#' when checking for duplicated strings, as it allows us to account for the same
+#' genes being present in a different order.
+#'
+#' @param x a character string or vector of character strings.
+#'
+#' @export
+
+order_position_string <- function(x) {
+
+  # checks
+  stopifnot(all(is.character(x)))
+  check_position_string(x)
+
+  # sort genes in alphabetical order
+  ret <- mapply(function(s1) {
+    gene_names <- mapply(function(s2) s2[1], strsplit(s1, ":"))
+    s1[order(gene_names)] |>
+      paste(collapse = ";")
+  }, strsplit(x, ";"))
+
+
+  return(ret)
+}
+
+#------------------------------------------------
 #' @title List allowed amino acids
 #'
 #' @description

@@ -8,9 +8,9 @@ More specifically, we can define two types of strings that we interested in:
 - **variant strings** contain position information (gene and codon) along with corresponding amino acids.
 - **position strings** are a stripped down version of a variant string, containing just the position information but no amino acids.
 
-Variant strings are useful when obtaining the numerator in a prevalence calculation, and the corresponding position string is useful when obtaining the denominator.
+Variant strings are useful when obtaining the numerator in a prevalence calculation. The corresponding position string is useful when obtaining the denominator.
 
-This package contains functions to...
+This package contains functions that...
 
 - Check for a valid variant string.
 - Check for a valid position string.
