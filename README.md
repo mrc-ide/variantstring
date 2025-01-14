@@ -21,4 +21,4 @@ This package contains functions that...
 
 ## Release history
 
-The current version is 1.1.0, released 14 Jan 2025.
+The current version is 1.2.0, released 14 Jan 2025.
