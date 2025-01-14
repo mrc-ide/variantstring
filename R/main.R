@@ -659,3 +659,67 @@ allowed_amino_acids <- function() {
   ret <- readRDS(file_path)
   return(ret)
 }
+
+#------------------------------------------------
+#' @title Count number of heterozygous loci
+#'
+#' @description
+#' Count the number of heterozygous loci in a variant string. This is over all
+#' genes and all codon positions.
+#'
+#' @param x a vector of variant strings.
+#'
+#' @export
+
+count_het_loci <- function(x) {
+
+  # check
+  check_variant_string(x)
+
+  ret <- mapply(function(s1) {
+    mapply(function(s2) {
+      sum(grepl("[/|]", s2$aa))
+    }, s1) |>
+      sum()
+  }, expand_variant_string(x))
+
+  return(ret)
+}
+
+#------------------------------------------------
+#' @title Get all genotypes that are consistent with a variant string
+#'
+#' @description
+#' For a variant string with heterozygous loci there are several genotypes that
+#' may be present in this mixture. This function returns all possible genotypes
+#' that may be found within the variant. If there is a single heterozygous site
+#' then two genotypes will be produced, and we can be 100% confident that both
+#' are present. For 2 or more heterozygous loci we can never be 100% sure of the
+#' combinations present.
+#'
+#' @param x a vector of variant strings.
+#'
+#' @export
+
+get_consistent_variants <- function(x) {
+
+  # check
+  check_variant_string(x)
+
+  # enumerate all possible consistent genotypes
+  ret <- mapply(function(s1) {
+    gene_combos <- mapply(function(s2) {
+      aa_combos <- strsplit(s2$aa, "[/|]") |>
+        expand.grid()
+      sprintf("%s:%s:%s",
+              s2$name,
+              paste(s2$pos, collapse = "_"),
+              apply(aa_combos, 1, function(x) paste(x, collapse = "_")))
+    }, s1, SIMPLIFY = FALSE) |>
+      expand.grid()
+    apply(gene_combos, 1, function(x) paste(x, collapse = ";"))
+  }, expand_variant_string(x))
+
+  return(ret)
+}
+
