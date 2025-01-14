@@ -4,8 +4,12 @@
 \alias{check_variant_string}
 \title{Check for a valid variant string}
 \usage{
-check_variant_string()
+check_variant_string(x)
+}
+\arguments{
+\item{x}{a character string or vector of character strings.}
 }
 \description{
-Checks that an input string matches the required format for a variant string.
+Checks that an input string (or a vector of strings) matches the required
+format for a variant string.
 }
