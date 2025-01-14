@@ -22,6 +22,7 @@ crt:1:A|C;mdr1:1:A|C|D,F,inconsistent number of phased amino acids between genes
 crt:1:A/A,F,repeated amino acid at unphased heterozygous locus
 crt:1:A|A,F,repeated amino acid at phased heterozygous locus
 crt:1:A;crt:2:A,F,duplicate gene names
+CRT:1:A,T,Uppercase letters are allowed in gene names
 mdr-1:1:A,T,hyphen allowed in gene name
 mdr_1:1:A,T,underscore allowed in gene name
 crt:1:A,T,single locus format
