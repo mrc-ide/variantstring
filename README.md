@@ -12,11 +12,9 @@ Variant strings are useful when obtaining the numerator in a prevalence calculat
 
 This package contains functions that...
 
-- Check for a valid variant string.
-- Check for a valid position string.
+- Check for a valid variant and position strings.
 - Extract a position string from a variant string.
 - Compare two variant strings to look for a match (useful in numerator calculation). Reports whether the match is ambiguous or not, as in the case of mixed infections.
 - Compare a position string against a variant string to look for a match (useful in denominator calculation).
-- Convert a variant string into an ordered version of the same string.
-- Convert a position string into an ordered version of the same string.
+- Convert a variant and position strings into an ordered versions.
 - Extract all single-locus variants from a variant string.

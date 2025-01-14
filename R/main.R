@@ -1,4 +1,5 @@
 
+
 #------------------------------------------------
 #' @title Check for a valid variant string
 #'
@@ -218,6 +219,28 @@ check_variant_string <- function(x) {
 }
 
 #------------------------------------------------
+# Expand variant strings into their separate elements
+#' @noRd
+expand_variant_string <- function(x) {
+
+  # checks
+  check_variant_string(x)
+
+  # remove underscores from amino acids
+
+  # expand each element into a list
+  ret <- mapply(function(s1) {
+    mapply(function(s2) {
+      list(name = s2[1],
+           pos = as.numeric(strsplit(s2[2], "_")[[1]]),
+           aa = strsplit(gsub("_", "", s2[3]), "(?<=[A-Z])(?=[^/|])", perl = TRUE)[[1]])
+    }, strsplit(s1, ":"), SIMPLIFY = FALSE)
+  }, strsplit(x, ";"), SIMPLIFY = FALSE)
+
+  return(ret)
+}
+
+#------------------------------------------------
 #' @title Check for a valid position string
 #'
 #' @description
@@ -344,6 +367,48 @@ check_position_string <- function(x) {
 }
 
 #------------------------------------------------
+# Expand position strings into their separate elements
+#' @noRd
+expand_position_string <- function(x) {
+
+  # checks
+  check_position_string(x)
+
+  # expand each element into a list
+  ret <- mapply(function(s1) {
+    mapply(function(s2) {
+      list(name = s2[1],
+           pos = as.numeric(strsplit(s2[2], "_")[[1]]))
+    }, strsplit(s1, ":"), SIMPLIFY = FALSE)
+  }, strsplit(x, ";"), SIMPLIFY = FALSE)
+
+  return(ret)
+}
+
+#------------------------------------------------
+#' @title Check that no heterozygous calls within a variant string
+#'
+#' @description
+#' Check that no heterozygous calls within a variant string.
+#'
+#' @param x a variant string or vector of variant strings.
+#'
+#' @export
+
+check_nohet_variant_string <- function(x) {
+
+  # checks
+  stopifnot(all(is.character(x)))
+  check_variant_string(x)
+
+  if (any(grepl("[/|]", x))) {
+    stop("input string cannot contain any heterozygous sites")
+  }
+
+  invisible(TRUE)
+}
+
+#------------------------------------------------
 #' @title Extract a position string from a variant string
 #'
 #' @description
@@ -424,6 +489,153 @@ order_position_string <- function(x) {
       paste(collapse = ";")
   }, strsplit(x, ";"))
 
+
+  return(ret)
+}
+
+#------------------------------------------------
+#' @title Compares variant strings to look for a match
+#'
+#' @description
+#' Compares a target variant string against a vector of comparator strings. A
+#' match is found if every amino acid at every codon position in every gene of
+#' the target is also found within the comparator. Note that ambiguous matches
+#' may occur if there are multiple mixed calls in the comparator, in which case
+#' the target may or may not be within this sample. In this case, a match is
+#' recorded but a second output also flags this as an ambiguous match.
+#'
+#' @param target_string a single variant string that we want to compare. Cannot
+#'   contain any heterozygous calls.
+#' @param comparison_strings a vector of variant strings against which the
+#'   target is compared.
+#'
+#' @export
+
+compare_variant_string <- function(target_string, comparison_strings) {
+
+  # checks
+  check_variant_string(target_string)
+  stopifnot(length(target_string) == 1)
+  check_nohet_variant_string(target_string)
+  check_variant_string(comparison_strings)
+
+  # expand both input strings into lists
+  target_list <- expand_variant_string(target_string)[[1]]
+  comparison_list <- expand_variant_string(comparison_strings)
+  n_target_genes <- length(target_list)
+  n_comparisons <- length(comparison_list)
+
+  target_names <- mapply(function(x) x$name, target_list)
+  match_vec <- rep(FALSE, n_comparisons)
+  ambiguous_vec <- rep(FALSE, n_comparisons)
+  for (i in 1:n_comparisons) {
+
+    comparison_names <- mapply(function(x) x$name, comparison_list[[i]])
+    if (all(target_names %in% comparison_names)) {
+
+      m <- match(target_names, comparison_names)
+      match_vec_i <- rep(FALSE, n_target_genes)
+      ambiguous_vec_i <- rep(0, n_target_genes)
+      for (j in 1:n_target_genes) {
+
+        target_pos <- target_list[[j]]$pos
+        comparison_pos <- comparison_list[[i]][[m[j]]]$pos
+        if (all(target_pos %in% comparison_pos)) {
+
+          m2 <- match(target_pos, comparison_pos)
+          target_aa <- target_list[[j]]$aa
+          comparison_aa <- comparison_list[[i]][[m[j]]]$aa[m2]
+
+          match_vec_i[j] <- all(mapply(function(a, b) grepl(a, b), target_aa, comparison_aa))
+          ambiguous_vec_i[j] <- sum(grepl("[|/]", comparison_aa))
+        }
+      }
+      match_vec[i] <- all(match_vec_i)
+      ambiguous_vec[i] <- (sum(ambiguous_vec_i) > 1)
+    }
+  }
+
+  return(list(match = match_vec,
+              ambiguous = ambiguous_vec))
+}
+
+#------------------------------------------------
+#' @title Compares a position strings against variant strings to look for a match
+#'
+#' @description
+#' Compares a target position string against a vector of comparator strings. A
+#' match is found if every codon position in every gene of the target is also
+#' found within the comparator (irrespective of the observed amino acids).
+#'
+#' @param target_string a single position string that we want to compare.
+#' @param comparison_strings a vector of variant strings against which the
+#'   target is compared.
+#'
+#' @export
+
+compare_position_string <- function(target_string, comparison_strings) {
+
+  # checks
+  check_position_string(target_string)
+  stopifnot(length(target_string) == 1)
+  check_variant_string(comparison_strings)
+
+  # expand both input strings into lists
+  target_list <- expand_position_string(target_string)[[1]]
+  comparison_list <- expand_variant_string(comparison_strings)
+  n_target_genes <- length(target_list)
+  n_comparisons <- length(comparison_list)
+
+  target_names <- mapply(function(x) x$name, target_list)
+  match_vec <- rep(FALSE, n_comparisons)
+  for (i in 1:n_comparisons) {
+
+    comparison_names <- mapply(function(x) x$name, comparison_list[[i]])
+    if (all(target_names %in% comparison_names)) {
+
+      m <- match(target_names, comparison_names)
+      match_vec_i <- rep(FALSE, n_target_genes)
+      for (j in 1:n_target_genes) {
+
+        target_pos <- target_list[[j]]$pos
+        comparison_pos <- comparison_list[[i]][[m[j]]]$pos
+        match_vec_i[j] <- all(target_pos %in% comparison_pos)
+      }
+      match_vec[i] <- all(match_vec_i)
+    }
+  }
+
+  return(match = match_vec)
+}
+
+#------------------------------------------------
+#' @title Extract all single-locus variants from a variant string
+#'
+#' @description
+#' Takes a vector of variant strings, potentially with information at multiple
+#' codon positions or genes, and returns variant strings corresponding to all
+#' unique single-locus variants within the input. For example, crt:72_73:C_N/V
+#' can be extracted to crt:72:C and crt:73:N/V.
+#'
+#' @param x a vector of variant strings.
+#'
+#' @export
+
+extract_single_locus_variants <- function(x) {
+
+  # checks
+  check_variant_string(x)
+
+  # split into single-locus variants
+  ret <- mapply(function(y) {
+    mapply(function(z) {
+      sprintf("%s:%s:%s", z$name, z$pos, z$aa)
+    }, y, SIMPLIFY = FALSE) |>
+      unlist()
+  }, expand_variant_string(x), SIMPLIFY = FALSE) |>
+    unlist() |>
+    unique() |>
+    sort()
 
   return(ret)
 }

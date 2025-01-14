@@ -1,0 +1,27 @@
+﻿target_string,comparison_string,position_string,expect_match,expect_ambiguous,notes
+crt:1:A,crt:1:A,F,T,F,simple exact match
+crt:1:A,crt:1_2:AC,F,T,F,match to subset of positions
+crt:1:A,crt:1:A;mdr-1:1:A,F,T,F,match to subset of genes
+crt:1_3:AA,crt:1_2_3:AAA,F,T,F,match to multiple positions
+crt:1_3:AA;mdr-1:1_3:AA,crt:1_2_3:AAA;mdr-1:1_2_3:AAA,F,T,F,match to multiple genes
+crt:1:A,crt:1:A/C,F,T,F,match to an unphased het call
+crt:1:A,crt:1:A|C,F,T,F,match to a phased het call
+crt:1_2:AA,crt:1_2:A/C_A/C,F,T,T,ambiguous match in single gene (unphased)
+crt:1_2:AA,crt:1_2:A|C_A|C,F,T,T,ambiguous match in single gene (phased)
+crt:1:A;mdr-1:1:A,crt:1:A/C;mdr-1:1:A/C,F,T,T,ambiguous match over multiple genes (unphased)
+crt:1:A;mdr-1:1:A,crt:1:A|C;mdr-1:1:A|C,F,T,T,ambiguous match over multiple genes (phased)
+mdr-1:2_4:AA;k13:1_2:AA,mdr-1:1_2_3_4:A/C_A_A/C_A;k13:1_2_3_4:A_A_A/C_A/C,F,T,F,complex unambiguous example
+mdr-1:2_4:AA;k13:1_2:AA,mdr-1:1_2_3_4:A/C_A/C_A_A;k13:1_2_3_4:A_A/C_A_A/C,F,T,T,complex ambiguous example
+crt:1:A,crt:1:C,F,F,F,simple mismatch
+crt:1:A,crt:1_2:CC,F,F,F,mismatch in subset of positions
+mdr-1:1:A,crt:1:A;mdr-1:1:C,F,F,F,mismatch in subset of genes
+crt:1:A,crt:1:C/D,F,F,F,mismatch in unphased het call
+crt:1:A,crt:1:C|D,F,F,F,mismatch in phased het call
+mdr-1:2_4:AA;k13:1_2:AA,mdr-1:1_2_3_4:A/C_A_A/C_A;k13:1_2_3_4:A_C_A/C_A/C,F,F,F,complex mismatch example
+crt:1,crt:1:A,T,T,NA,simple exact match
+crt:1,crt:1_2:AC,T,T,NA,match to subset of positions
+crt:1,crt:1:A;mdr-1:1:A,T,T,NA,match to subset of genes
+crt:1_3,crt:1_2_3:AAA,T,T,NA,match to multiple positions
+crt:1_3;mdr-1:1_3,crt:1_2_3:AAA;mdr-1:1_2_3:AAA,T,T,NA,match to multiple genes
+crt:1,crt:1:A/C,T,T,NA,match to an unphased het call
+crt:1,crt:1:A|C,T,T,NA,match to a phased het call
