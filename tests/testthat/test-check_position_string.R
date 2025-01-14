@@ -1,8 +1,8 @@
 
-test_that("check allowed and disallowed variant strings", {
+test_that("check allowed and disallowed position strings", {
 
   # read data.frame from inst/extdata directory
-  file_path <- system.file("extdata", "variant_string_tests.csv", package = "variantstring")
+  file_path <- system.file("extdata", "position_string_tests.csv", package = "variantstring")
   df_string <- read.csv(file_path)
 
   # store if each string value passes checks
@@ -11,7 +11,7 @@ test_that("check allowed and disallowed variant strings", {
     pass_checks[i] <- tryCatch(
       {
         # Attempt to run the function
-        check_variant_string(df_string$string[i]) |>
+        check_position_string(df_string$string[i]) |>
           suppressMessages() |>
           suppressWarnings()
         TRUE  # If no error, return TRUE

@@ -1,0 +1,15 @@
+﻿string,allowed,notes
+mdr_1:1,F,invalid characters in gene name
+crt:1;-mrd1:1,F,hyphen at start of gene name
+crt:1;mrd1:1;,F,hanging semicolon
+crt:1:,F,hanging colon
+crt::1,F,extra colon
+crt:1_2_three,F,non-numeric codon position
+crt:0_1_2,F,zero codon position
+crt:1_2_2,F,duplicated codon position
+crt:1_3_2,F,non-increasing codon position
+crt:1;crt:2,F,duplicate gene names
+crt:1,T,single locus format
+crt:1_2,T,multiple locus format
+mdr-1:1,T,hyphen in gene name
+crt:1;mrd-1:1,T,hyphen in multigene name

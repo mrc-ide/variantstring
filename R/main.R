@@ -35,7 +35,6 @@ check_variant_string <- function(x) {
   #     - a single amino acid group cannot contain both | and / (no mixed phasing)
   #     - all amino acid loci with phased heterozygotes contain the same number of amino acids. This is true both within and between genes.
   #     - hets cannot have the same amino acid multiple times
-  # - no duplicate gene names
 
   # is character vector
   stopifnot(all(is.character(x)))
@@ -205,7 +204,7 @@ check_variant_string <- function(x) {
 
   # if any invalid entries then print all issues before exit
   if (any(!valid)) {
-    message("The following issues were found in variant_string:")
+    message("The following issues were found:")
     for (i in seq_along(valid)) {
       if (!valid[i]) {
         message(sprintf("  - entry %s: %s", i, reason[i]))
@@ -216,6 +215,159 @@ check_variant_string <- function(x) {
   }
 
   invisible(TRUE)
+}
+
+#------------------------------------------------
+#' @title Check for a valid position string
+#'
+#' @description
+#' Checks that an input string (or a vector of strings) matches the required
+#' format for a position string. This is equivalent to a full variant string but
+#' with the amino acid information removed, so just giving the gene name(s) and
+#' position(s).
+#'
+#' @param x a character string or vector of character strings.
+#'
+#' @export
+
+check_position_string <- function(x) {
+
+  # CHECKS
+  # - is character string
+  # - no empty genes
+  # - contains exactly two characteristics per gene
+  # - gene name (first characteristic):
+  #     - contains only allowed characters
+  #     - no duplicated gene names
+  # - codon position (second characteristic):
+  #     - contains only allowed characters
+  #     - positions are non-zero
+  #     - positions are not duplicated
+  #     - positions are sorted increasing
+
+  # is character vector
+  stopifnot(all(is.character(x)))
+
+  # create objects for storing which rows fail. This allows for more
+  # informative error messages in which several issues can be listed at once
+  # rather than breaking at the first issue
+  n <- length(x)
+  valid <- rep(TRUE, n)
+  reason <- rep(NA, n)
+
+  # input may be a single string or a vector of strings. Loop through elements
+  for (i in 1:n) {
+
+    # split into genes
+    s1 <- stringr::str_split(x[i], ";", n = Inf, simplify = FALSE)[[1]]
+    n_genes <- length(s1)
+
+    if (any(s1 == "")) {
+      valid[i] <- FALSE
+      reason[i] <-"contains one or more empty genes"
+      next()
+    }
+
+    # keep track of gene names
+    gene_names <- rep(NA, n_genes)
+
+    # loop over genes
+    for (j in seq_along(s1)) {
+
+      # split this gene into characteristics
+      z <- stringr::str_split(s1[j], ":", n = Inf, simplify = FALSE)[[1]]
+      gene_names[j] <- z[1]
+
+      if (length(z) != 2) {
+        valid[i] <- FALSE
+        reason[i] <- sprintf("gene %s does not contain two characteristics separated by a colon", j)
+        next()
+      }
+
+      if (!grepl("^[a-z][a-z0-9-]*$", z[1])) {
+        valid[i] <- FALSE
+        reason[i] <- sprintf("gene name %s contains invalid characters", z[1])
+        next()
+      }
+
+      if (!grepl("^[0-9_]+$", z[2])) {
+        valid[i] <- FALSE
+        reason[i] <- "codon positions contain invalid characters"
+        next()
+      }
+
+      # split second characteristic by codon and make numeric
+      y <- stringr::str_split(z[2], "_", n = Inf, simplify = FALSE)[[1]] |>
+        as.numeric()
+
+      if (any(y == 0)) {
+        valid[i] <- FALSE
+        reason[i] <- "codon position cannot be zero"
+        next()
+      }
+
+      if (any(duplicated(y))) {
+        valid[i] <- FALSE
+        reason[i] <- "codon contains duplicated positions"
+        next()
+      }
+
+      if (!all(diff(y) > 0)) {
+        valid[i] <- FALSE
+        reason[i] <- "codon positions must be sorted increasing"
+        next()
+      }
+
+    } # end loop over genes
+
+    if (any(duplicated(gene_names))) {
+      valid[i] <- FALSE
+      reason[i] <- "duplicated gene names"
+      next()
+    }
+
+  } # end loop over elements of x
+
+  # if any invalid entries then print all issues before exit
+  if (any(!valid)) {
+    message("The following issues were found:")
+    for (i in seq_along(valid)) {
+      if (!valid[i]) {
+        message(sprintf("  - entry %s: %s", i, reason[i]))
+      }
+    }
+
+    stop()
+  }
+
+  invisible(TRUE)
+}
+
+#------------------------------------------------
+#' @title Extract a position string from a variant string
+#'
+#' @description
+#' Extract a position string from a variant string by stripping the amino acids.
+#'
+#' @param x a character string or vector of character strings.
+#'
+#' @export
+
+position_from_variant_string <- function(x) {
+
+  # checks
+  stopifnot(all(is.character(x)))
+  check_variant_string(x)
+
+  # strip amino acids
+  ret <- mapply(function(s1) {
+    mapply(function(s2) {
+      paste(s2[1:2], collapse = ":")
+    }, strsplit(s1, ":")) |>
+      paste(collapse = ";")
+  }, strsplit(x, ";"))
+
+  return(ret)
 }
 
 #------------------------------------------------
