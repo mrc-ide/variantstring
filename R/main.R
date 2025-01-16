@@ -1,4 +1,20 @@
 
+# check_variant_string
+# check_position_string
+# variant_to_long
+# long_to_variant
+# position_to_long
+# long_to_position
+# position_from_variant_string
+# order_variant_string
+# order_position_string
+# count_het_loci
+# compare_variant_string
+# compare_position_string
+# extract_single_locus_variants
+# get_consistent_variants
+# allowed_amino_acids
+
 #------------------------------------------------
 #' @title Check for a valid variant string
 #'
@@ -597,7 +613,7 @@ long_to_variant <- function(x) {
 
       # concatenate into one string
       ret <- df_gene |>
-        left_join(df_read_count, by = join_by(.data$gene, .data$pos)) |>
+        left_join(df_read_count, by = c("gene", "pos")) |>
         mutate(variant = sprintf("%s:%s:%s:%s", .data$gene, .data$pos, .data$aa, .data$read_count)) |>
         pull(.data$variant) |>
         paste(collapse = ";")
