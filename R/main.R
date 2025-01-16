@@ -885,7 +885,7 @@ compare_variant_string <- function(target_string, comparison_strings) {
 
     # get if a match over all loci, and if match is ambiguous
     ret$match[i] <- all(df_match$match == 1)
-    ret$ambiguous[i] <- (sum(df_match$het) > 1)
+    ret$ambiguous[i] <- (sum(df_match$het) > 1) & ret$match[i]
 
     if (sum(df_match$het) == 0) {
       ret$prop[i] <- ret$match[i]
