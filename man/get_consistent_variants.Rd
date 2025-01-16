@@ -10,10 +10,7 @@ get_consistent_variants(x)
 \item{x}{a vector of variant strings.}
 }
 \description{
-For a variant string with heterozygous loci there are several genotypes that
-may be present in this mixture. This function returns all possible genotypes
-that may be found within the variant. If there is a single heterozygous site
-then two genotypes will be produced, and we can be 100% confident that both
-are present. For 2 or more heterozygous loci we can never be 100% sure of the
-combinations present.
+For a variant string with at most one heterozygous locus we can unambiguously
+define the genotypes that are present in this mixture. This function returns
+all such component genotypes.
 }

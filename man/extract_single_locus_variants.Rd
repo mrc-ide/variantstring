@@ -13,5 +13,5 @@ extract_single_locus_variants(x)
 Takes a vector of variant strings, potentially with information at multiple
 codon positions or genes, and returns variant strings corresponding to all
 unique single-locus variants within the input. For example, crt:72_73:C_N/V
-can be extracted to crt:72:C and crt:73:N/V.
+can be extracted to crt:72:C, crt:73:N, and crt:73:V.
 }

@@ -14,10 +14,10 @@ contain any heterozygous calls.}
 target is compared.}
 }
 \description{
-Compares a target variant string against a vector of comparator strings. A
+Compares a target variant string against a vector of comparison strings. A
 match is found if every amino acid at every codon position in every gene of
-the target is also found within the comparator. Note that ambiguous matches
-may occur if there are multiple mixed calls in the comparator, in which case
-the target may or may not be within this sample. In this case, a match is
-recorded but a second output also flags this as an ambiguous match.
+the target is also found within the comparison. Note that ambiguous matches
+may occur if there are multiple heterozygous loci in the comparison. In this
+case, the target may or may not be within this sample. A match is recorded
+but a second output also flags this as an ambiguous match.
 }

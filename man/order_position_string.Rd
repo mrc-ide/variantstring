@@ -2,15 +2,15 @@
 % Please edit documentation in R/main.R
 \name{order_position_string}
 \alias{order_position_string}
-\title{Reorders a position string in alphabetical order of genes}
+\title{Reorders a position string}
 \usage{
 order_position_string(x)
 }
 \arguments{
-\item{x}{a character string or vector of character strings.}
+\item{x}{a position string or vector of position strings.}
 }
 \description{
 Reorders a position string in alphabetical order of genes. This can be useful
-when checking for duplicated strings, as it allows us to account for the same
-genes being present in a different order.
+when checking for duplicated strings as the same information may be presented
+in a different order.
 }
