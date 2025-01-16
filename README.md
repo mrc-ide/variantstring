@@ -5,20 +5,19 @@ An R package for working with genetic information encoded in *variant string for
 
 More specifically, we can define two types of strings that we interested in:
 
-- **variant strings** contain position information (gene and codon) along with corresponding amino acids.
-- **position strings** are a stripped down version of a variant string, containing just the position information but no amino acids.
+- **variant strings** contain position information (gene and codon) along with corresponding amino acids. Optionally they may also include read counts for each corresponding amino acid.
+- **position strings** are a stripped down version of a variant string, containing just the gene and codon position information.
 
-Variant strings are useful when obtaining the numerator in a prevalence calculation. The corresponding position string is useful when obtaining the denominator.
+In brief, this package contains functions that...
 
-This package contains functions that...
-
-- Check for a valid variant and position strings.
+- Check for correctly formatted variant and position strings.
 - Extract a position string from a variant string.
-- Compare two variant strings to look for a match (useful in numerator calculation). Reports whether the match is ambiguous or not, as in the case of mixed infections.
-- Compare a position string against a variant string to look for a match (useful in denominator calculation).
-- Convert a variant and position strings into an ordered versions.
-- Extract all single-locus variants from a variant string.
+- Compare two variant strings to look for a match (useful in numerator of prevalence calculation). Reports if this is an exact match or an ambiguous match.
+- Compare a position string against a variant string to look for a match (useful in denominator of prevalence calculation).
+- Convert between string format and a long-form data.frame format.
+
+There are also a few more utility functions not listed here - see the package help for a complete list of functions.
 
 ## Release history
 
-The current version is 1.4.0, released 16 Jan 2025.
+The current version is 1.4.1, released 16 Jan 2025.
