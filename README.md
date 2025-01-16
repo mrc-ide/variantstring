@@ -12,6 +12,7 @@ In brief, this package contains functions that...
 
 - Check for correctly formatted variant and position strings.
 - Extract a position string from a variant string.
+- Subset a variant string based on a position string.
 - Compare two variant strings to look for a match (useful in numerator of prevalence calculation). Reports if this is an exact match or an ambiguous match.
 - Compare a position string against a variant string to look for a match (useful in denominator of prevalence calculation).
 - Convert between string format and a long-form data.frame format.
@@ -20,4 +21,4 @@ There are also a few more utility functions not listed here - see the package he
 
 ## Release history
 
-The current version is 1.5.1, released 16 Jan 2025.
+The current version is 1.6.0, released 16 Jan 2025.

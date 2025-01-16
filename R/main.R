@@ -7,6 +7,7 @@
 # position_to_long
 # long_to_position
 # position_from_variant_string
+# subset_position
 # order_variant_string
 # order_position_string
 # count_het_loci
@@ -728,6 +729,46 @@ position_from_variant_string <- function(x) {
   }, variant_to_long(x), SIMPLIFY = FALSE) |>
     long_to_position()
 
+}
+
+#------------------------------------------------
+#' @title Subset position of a variant string
+#'
+#' @description
+#' Given a vector of variant strings and a single position string, subsets all
+#' variant strings to only the genes and codons in the position string. Retains
+#' read counts at these positions if present.
+#'
+#' @param position_string a single position string.
+#' @param variant_strings a variant string or vector of variant strings.
+#'
+#' @import dplyr
+#'
+#' @export
+
+subset_position <- function(position_string, variant_strings) {
+
+  # checks
+  check_position_string(position_string)
+  stopifnot(length(position_string) == 1)
+  check_variant_string(variant_strings)
+
+  # get position string in long form
+  df_position <- position_to_long(position_string)[[1]]
+
+  ret <- mapply(function(x) {
+    df_diff <- anti_join(df_position, x, by = c("gene", "pos"))
+    if (nrow(df_diff) == 0) {
+      df_sub <- semi_join(x, df_position, by = c("gene", "pos"))
+      ret <- long_to_variant(list(df_sub))
+    } else {
+      ret <- NA
+    }
+    ret
+  }, variant_to_long(variant_strings), SIMPLIFY = FALSE) |>
+    unlist()
+
+  return(ret)
 }
 
 #------------------------------------------------
