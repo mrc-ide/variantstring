@@ -2,14 +2,14 @@
 % Please edit documentation in R/main.R
 \name{count_het_loci}
 \alias{count_het_loci}
-\title{Count number of heterozygous loci}
+\title{Count the number of heterozygous loci in each variant string}
 \usage{
 count_het_loci(x)
 }
 \arguments{
-\item{x}{a vector of variant strings.}
+\item{x}{a variant string or vector of variant strings.}
 }
 \description{
-Count the number of heterozygous loci in a variant string. This is over all
-genes and all codon positions.
+Count the number of heterozygous loci in each variant string and return as a
+vector.
 }

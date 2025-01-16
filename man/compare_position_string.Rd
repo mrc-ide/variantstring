@@ -13,7 +13,7 @@ compare_position_string(target_string, comparison_strings)
 target is compared.}
 }
 \description{
-Compares a target position string against a vector of comparator strings. A
+Compares a target position string against a vector of comparison strings. A
 match is found if every codon position in every gene of the target is also
-found within the comparator (irrespective of the observed amino acids).
+found within the comparison (irrespective of the observed amino acids).
 }
