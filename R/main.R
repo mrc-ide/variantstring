@@ -1,4 +1,5 @@
 
+# --- FUNCTION LIST ---
 # check_variant_string
 # check_position_string
 # variant_to_long
@@ -9,6 +10,7 @@
 # order_variant_string
 # order_position_string
 # count_het_loci
+# drop_read_counts
 # compare_variant_string
 # compare_position_string
 # extract_single_locus_variants
@@ -804,6 +806,28 @@ count_het_loci <- function(x) {
 }
 
 #------------------------------------------------
+#' @title Drop read counts from a variant string.
+#'
+#' @description
+#' Takes a vector of variant strings and strips and information on read counts.
+#'
+#' @param x a variant string or vector of variant strings.
+#'
+#' @export
+
+drop_read_counts <- function(x) {
+
+  # checks
+  check_variant_string(x)
+
+  mapply(function(y) {
+    y$read_count <- NA
+    y
+  }, variant_to_long(x), SIMPLIFY = FALSE) |>
+    long_to_variant()
+}
+
+#------------------------------------------------
 #' @title Compares variant strings to look for a match
 #'
 #' @description
@@ -967,8 +991,11 @@ get_consistent_variants <- function(x) {
   # get number of het loci. We will focus on unambiguous, so at most 1 het locus
   n_het_loci <- count_het_loci(x)
 
-  # get all variants into long format
-  variant_list <- variant_to_long(x)
+  # get all variants into long format and drop any read counts
+  variant_list <- mapply(function(y) {
+    y$read_count <- NA
+    y
+  }, variant_to_long(x), SIMPLIFY = FALSE)
 
   n <- length(x)
   ret <- replicate(n, NA, simplify = FALSE)
