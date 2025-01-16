@@ -21,4 +21,4 @@ There are also a few more utility functions not listed here - see the package he
 
 ## Release history
 
-The current version is 1.6.0, released 16 Jan 2025.
+The current version is 1.7.0, released 16 Jan 2025.

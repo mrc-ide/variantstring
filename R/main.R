@@ -924,17 +924,21 @@ compare_variant_string <- function(target_string, comparison_strings) {
     }, 1:nrow(df_target), SIMPLIFY = FALSE) |>
       dplyr::bind_rows()
 
-    # get if a match over all loci, and if match is ambiguous
+    # get if a match over all loci, if ambiguous, and the proportion
     ret$match[i] <- all(df_match$match == 1)
-    ret$ambiguous[i] <- (sum(df_match$het) > 1) & ret$match[i]
-
-    if (sum(df_match$het) == 0) {
-      ret$prop[i] <- ret$match[i]
-    } else if (sum(df_match$het) == 1) {
-      w <- which(df_match$het == 1)
-      ret$prop[i] <- df_match$read_num[w] / df_match$read_denom[w]
+    if (ret$match[i]) {
+      ret$ambiguous[i] <- (sum(df_match$het) > 1)
+      if (sum(df_match$het) == 0) {
+        ret$prop[i] <- 1
+      } else if (sum(df_match$het) == 1) {
+        w <- which(df_match$het == 1)
+        ret$prop[i] <- df_match$read_num[w] / df_match$read_denom[w]
+      } else {
+        ret$prop[i] <- NA
+      }
     } else {
-      ret$prop[i] <- NA
+      ret$ambiguous[i] <- FALSE
+      ret$prop[i] <- 0.0
     }
   }
 
