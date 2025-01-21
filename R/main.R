@@ -121,7 +121,7 @@ check_variant_string <- function(x) {
       # ------------------------------------------------------------
       # check gene name
 
-      if (!grepl("^[a-zA-Z][a-zA-Z0-9_-]*$", gene_name)) {
+      if (!grepl("^[a-zA-Z][a-zA-Z0-9._-]*$", gene_name)) {
         valid[i] <- FALSE
         reason[i] <- sprintf("gene name %s contains invalid characters", gene_name)
         next()
@@ -417,7 +417,7 @@ check_position_string <- function(x) {
       # ------------------------------------------------------------
       # check gene name
 
-      if (!grepl("^[a-zA-Z][a-zA-Z0-9_-]*$", gene_name)) {
+      if (!grepl("^[a-zA-Z][a-zA-Z0-9._-]*$", gene_name)) {
         valid[i] <- FALSE
         reason[i] <- sprintf("gene name %s contains invalid characters", gene_name)
         next()
