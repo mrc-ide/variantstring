@@ -9,7 +9,8 @@ test_that("check for correct matches and mismatches of variant strings and posit
   df_variant <- df_string |>
     dplyr::filter(position_string == FALSE) |>
     dplyr::mutate(confirm_match = NA,
-                  confirm_ambiguous = NA)
+                  confirm_ambiguous = NA,
+                  confirm_prop = NA)
 
   # store results of each comparison
   for (i in 1:nrow(df_variant)) {
@@ -17,10 +18,16 @@ test_that("check for correct matches and mismatches of variant strings and posit
                                 comparison_strings = df_variant$comparison_string[i])
     df_variant$confirm_match[i] <- x$match
     df_variant$confirm_ambiguous[i] <- x$ambiguous
+    df_variant$confirm_prop[i] <- x$prop
   }
 
   # check that this matches with what we expect
-  all((df_variant$expect_match == df_variant$confirm_match) &
-    (df_variant$expect_ambiguous == df_variant$confirm_ambiguous)) |>
-    testthat::expect_true()
+  match_correct <- 1
+  all.equal(df_variant$expect_match, df_variant$confirm_match)
+  ambiguous_correct <- 1
+  all.equal(df_variant$expect_ambiguous, df_variant$confirm_ambiguous)
+  prop_correct <- 1
+  all.equal(df_variant$expect_prop, df_variant$confirm_prop)
+
+  testthat::expect_true(match_correct & ambiguous_correct & prop_correct)
 })
