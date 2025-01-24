@@ -1,17 +1,20 @@
 ﻿string,allowed,notes
-crt:1;-mrd1:1,F,hyphen not allowed at start of gene name
-crt:1;_mrd1:1,F,underscore not allowed at start of gene name
-crt:1;mrd1:1;,F,hanging semicolon
+crt:1;mdr1:1;,F,hanging semicolon
+crt:1;;mdr1:1,F,extra semicolon
 crt:1:,F,hanging colon
 crt::1,F,extra colon
+crt:1;1mdr:1,F,number not allowed at start of gene name
+crt:1;-mdr1:1,F,hyphen not allowed at start of gene name
+crt:1;_mdr1:1,F,underscore not allowed at start of gene name
+crt:1;.mdr1:1,F,period not allowed at start of gene name
+crt:1;crt:2,F,duplicate gene names
 crt:1_2_three,F,non-numeric codon position
 crt:0_1_2,F,zero codon position
 crt:1_2_2,F,duplicated codon position
 crt:1_3_2,F,non-increasing codon position
-crt:1;crt:2,F,duplicate gene names
-CRT:1,T,uppercase letters are allowed in gene name
+CRT:1,T,uppercase letters are allowed in gene names
+mdr-1:1,T,hyphen is allowed in gene name
+mdr_1:1,T,underscore is allowed in gene name
+mdr.1:1,T,period is allowed in gene name
 crt:1,T,single locus format
 crt:1_2,T,multiple locus format
-mdr-1:1,T,hyphen allowed in gene name
-mdr_1:1,T,underscore allowed in gene name
-crt:1;mrd-1:1,T,hyphen in multigene name

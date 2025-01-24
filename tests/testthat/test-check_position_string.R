@@ -24,6 +24,6 @@ test_that("check allowed and disallowed position strings", {
   }
 
   # check that this matches with what we expect
-  testthat::expect_true(all(df_string$allowed == pass_checks))
+  testthat::expect_true(all.equal.character(df_string$allowed, pass_checks))
 
 })

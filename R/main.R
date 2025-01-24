@@ -10,12 +10,13 @@
 # subset_position
 # order_variant_string
 # order_position_string
-# count_het_loci
+# count_unphased_hets
+# count_phased_hets
 # drop_read_counts
 # compare_variant_string
 # compare_position_string
 # extract_single_locus_variants
-# get_consistent_variants
+# get_component_variants
 # allowed_amino_acids
 
 #------------------------------------------------
@@ -37,10 +38,9 @@ check_variant_string <- function(x) {
   # CHECKS
   # - is character string
   # - no empty genes
-  # - contains exactly three elements per gene
+  # - contains exactly three or four elements per gene
   # - gene name (first element):
   #     - contains only allowed characters
-  #     - no duplicated gene names
   # - codon position (second element):
   #     - contains only allowed characters
   #     - positions are non-zero
@@ -52,8 +52,8 @@ check_variant_string <- function(x) {
   #     - cannot contain adjacent / or | symbols
   #     - number of amino acid loci matches number of codon positions
   #     - a single amino acid group cannot contain both | and / (no mixed phasing)
-  #     - hets cannot have the same amino acid multiple times
-  #     - all amino acid loci with phased heterozygotes contain the same number of amino acids. This is true both within and between genes.
+  #     - unphased hets cannot have the same amino acid multiple times (phased hets can)
+  #     - all amino acid loci with phased hets contain the same number of amino acids within a gene
   # - read count (optional fourth element):
   #     - contains only allowed characters
   #     - cannot start or end with / or | symbols
@@ -63,7 +63,10 @@ check_variant_string <- function(x) {
   #     - the pattern of phased and unphased read counts must match that in amino acids
   #     - read counts must be greater than 0
   #     - number of read counts at each locus must match number of amino acids at each locus
+  # - comparison across all elements
+  #     - no duplicated gene names
   #     - if read counts are present they must be present in all genes, and vice versa
+  #     - all amino acid loci with phased hets contain the same number of amino acids between genes
 
   # is character vector
   stopifnot(all(is.character(x)))
@@ -93,8 +96,7 @@ check_variant_string <- function(x) {
       next()
     }
 
-    # keep track of gene names and the number of distinct amino acids in phased
-    # heterozygous loci
+    # keep track of elements for comparison across all genes
     gene_name_vec <- rep(NA, n_genes)
     n_phased_vec <- rep(NA, n_genes)
     reads_present_vec <- rep(NA, n_genes)
@@ -121,7 +123,7 @@ check_variant_string <- function(x) {
       # ------------------------------------------------------------
       # check gene name
 
-      if (!grepl("^[a-zA-Z][a-zA-Z0-9_-]*$", gene_name)) {
+      if (!grepl("^[a-zA-Z][a-zA-Z0-9._-]*$", gene_name)) {
         valid[i] <- FALSE
         reason[i] <- sprintf("gene name %s contains invalid characters", gene_name)
         next()
@@ -208,9 +210,10 @@ check_variant_string <- function(x) {
       # split into distinct amino acids
       aa_list <- strsplit(codon_aa, "[/|]")
 
-      if (any(mapply(function(x) any(duplicated(x)), aa_list))) {
+      if (any(mapply(function(x) any(duplicated(x)), aa_list[which(!codon_phased)]))) {
         valid[i] <- FALSE
-        reason[i] <- "the same amino acid cannot be present more than once in a heterozygous call"
+        reason[i] <- str_c("the same amino acid cannot be present more than once in an ",
+                           "unphased heterozygous call")
         next()
       }
 
@@ -306,6 +309,9 @@ check_variant_string <- function(x) {
       }
 
     } # end loop over genes
+
+    # ------------------------------------------------------------
+    # comparison over genes
 
     if (valid[i] && (length(unique(na.omit(n_phased_vec))) > 1)) {
       valid[i] <- FALSE
@@ -417,7 +423,7 @@ check_position_string <- function(x) {
       # ------------------------------------------------------------
       # check gene name
 
-      if (!grepl("^[a-zA-Z][a-zA-Z0-9_-]*$", gene_name)) {
+      if (!grepl("^[a-zA-Z][a-zA-Z0-9._-]*$", gene_name)) {
         valid[i] <- FALSE
         reason[i] <- sprintf("gene name %s contains invalid characters", gene_name)
         next()
@@ -821,17 +827,17 @@ order_position_string <- function(x) {
 }
 
 #------------------------------------------------
-#' @title Count the number of heterozygous loci in each variant string
+#' @title Count the number of unphased heterozygous loci
 #'
 #' @description
-#' Count the number of heterozygous loci in each variant string and return as a
-#' vector.
+#' Count the number of unphased heterozygous loci in each variant string. Return
+#' the number as a vector.
 #'
 #' @param x a variant string or vector of variant strings.
 #'
 #' @export
 
-count_het_loci <- function(x) {
+count_unphased_hets <- function(x) {
 
   # checks
   check_variant_string(x)
@@ -839,9 +845,35 @@ count_het_loci <- function(x) {
   mapply(function(y1) {
     y1 |>
       group_by(.data$gene, .data$pos) |>
-      summarise(het = .data$het[1],
+      summarise(n = (.data$het[1] == TRUE) & (.data$phased[1] == FALSE),
                 .groups = "drop") |>
-      pull(.data$het) |>
+      pull(.data$n) |>
+      sum()
+  }, variant_to_long(x))
+}
+
+#------------------------------------------------
+#' @title Count the number of phased heterozygous loci
+#'
+#' @description
+#' Count the number of phased heterozygous loci in each variant string. Return
+#' the number as a vector.
+#'
+#' @param x a variant string or vector of variant strings.
+#'
+#' @export
+
+count_phased_hets <- function(x) {
+
+  # checks
+  check_variant_string(x)
+
+  mapply(function(y1) {
+    y1 |>
+      group_by(.data$gene, .data$pos) |>
+      summarise(n = (.data$het[1] == TRUE) & (.data$phased[1] == TRUE),
+                .groups = "drop") |>
+      pull(.data$n) |>
       sum()
   }, variant_to_long(x))
 }
@@ -893,7 +925,7 @@ compare_variant_string <- function(target_string, comparison_strings) {
   # checks
   check_variant_string(target_string)
   stopifnot(length(target_string) == 1)
-  if (count_het_loci(target_string) != 0) {
+  if ((count_unphased_hets(target_string) > 0) || (count_phased_hets(target_string) > 0)) {
     stop("target string cannot contain any heterozygous loci")
   }
   check_variant_string(comparison_strings)
@@ -1028,13 +1060,14 @@ extract_single_locus_variants <- function(x) {
 #'
 #' @export
 
-get_consistent_variants <- function(x) {
+get_component_variants <- function(x) {
 
   # check
   check_variant_string(x)
 
-  # get number of het loci. We will focus on unambiguous, so at most 1 het locus
-  n_het_loci <- count_het_loci(x)
+  # focus on unambiguous
+  unphased_hets <- count_unphased_hets(x)
+  phased_hets <- count_phased_hets(x)
 
   # get all variants into long format and drop any read counts
   variant_list <- mapply(function(y) {
@@ -1045,9 +1078,10 @@ get_consistent_variants <- function(x) {
   n <- length(x)
   ret <- replicate(n, NA, simplify = FALSE)
   for (i in 1:n) {
-    if (n_het_loci[i] == 0) {
+    if ((unphased_hets[i] == 0) & (phased_hets[i] == 0)) {
       ret[[i]] <- long_to_variant(variant_list[i])
-    } else if (n_het_loci[i] == 1) {
+
+    } else if ((unphased_hets[i] == 1) && (phased_hets[i] == 0)) {
 
       # get amino acids into list nested within data.frame
       df_nested <- variant_list[[i]] |>
@@ -1079,6 +1113,45 @@ get_consistent_variants <- function(x) {
         pull(.data$variant)
 
       ret[[i]] <- components
+
+    } else if ((unphased_hets[i] == 0) && (phased_hets[i] > 0)) {
+
+      # get amino acids into list nested within data.frame
+      df_nested <- variant_list[[i]] |>
+        group_by(.data$gene, .data$pos) |>
+        summarise(aa = list(.data$aa),
+                  .groups = "drop")
+
+      # get all phased combinations of amino acids
+      combos <- df_nested$aa |>
+        rbind.data.frame() |>
+        as.matrix() |>
+        t()
+      colnames(combos) <- sprintf("combo_%s", 1:ncol(combos))
+      rownames(combos) <- NULL
+
+      # get all possible variant strings
+      components <- df_nested |>
+        select(-.data$aa) |>
+        dplyr::bind_cols(combos) |>
+        pivot_longer(cols = starts_with("combo_"),
+                     names_to = "combo",
+                     values_to = "aa") |>
+        group_by(.data$combo, .data$gene) |>
+        summarise(pos = paste(.data$pos, collapse = "_"),
+                  aa = paste(.data$aa, collapse = "_"),
+                  .groups = "drop") |>
+        mutate(variant = sprintf("%s:%s:%s", .data$gene, .data$pos, .data$aa)) |>
+        group_by(.data$combo) |>
+        summarise(variant = paste(.data$variant, collapse = ";"),
+                  .groups = "drop") |>
+        pull(.data$variant)
+
+      ret[[i]] <- components
+
+    } else {
+      ret[[i]] <- NA
+
     }
   }
 
