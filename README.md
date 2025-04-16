@@ -3,18 +3,18 @@
 
 # variantstring
 
-This is an R package that defines *variant string format*, a convenient
-format for encoding multi-locus genotypes. Functionalities include
-converting into and out of variant string format, subsetting based on
-genomic position, and comparing two variant strings to see if one is a
-subset of the other.
+This R package that defines *variant string format*, a convenient format
+for encoding multi-locus genotypes. Functionalities include converting
+into and out of variant string format, subsetting based on genomic
+position, and comparing two variant strings to see if one is a subset of
+the other.
 
 ## Installation
 
 You can install directly from Github:
 
 ``` r
-devtools::install_github(repo = "mrc-ide/variantstring@1.8.0")
+devtools::install_github(repo = "mrc-ide/variantstring@1.8.1")
 ```
 
 Note the use of the @ symbol to reference a specific tagged version.
@@ -344,4 +344,4 @@ some operations. We can always convert back using `long_to_variant()`.
 
 ## Release history
 
-The current version is 1.8.0, released 20 Jan 2025.
+The current version is 1.8.1, released 16 April 2025.
