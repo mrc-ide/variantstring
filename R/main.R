@@ -964,8 +964,8 @@ compare_variant_string <- function(target_string, comparison_strings) {
     # simple exit if not match
     if (!all(df_target_match$match)) {
       ret$match[i] <- FALSE
-      ret$ambiguous <- FALSE
-      ret$prop <- 0
+      ret$ambiguous[i] <- FALSE
+      ret$prop[i] <- 0
       next
     }
 
