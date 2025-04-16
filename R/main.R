@@ -1,4 +1,10 @@
 
+# avoids "no visible bindings" warnings
+if (getRversion() >= "2.15.1") {
+  utils::globalVariables(c("gene", "pos", "aa", "het", "phased", "read_count",
+                           "combo", "variant"))
+}
+
 # --- FUNCTION LIST ---
 # check_variant_string
 # check_position_string
@@ -586,14 +592,14 @@ long_to_variant <- function(x) {
 
     # get into string format within each gene
     df_gene <- y1 |>
-      group_by(.data$gene, .data$pos) |>
-      summarise(aa = ifelse(.data$phased[1],
-                            paste(.data$aa, collapse = "|"),
-                            paste(.data$aa, collapse = "/")),
+      group_by(gene, pos) |>
+      summarise(aa = ifelse(phased[1],
+                            paste(aa, collapse = "|"),
+                            paste(aa, collapse = "/")),
                 .groups = "drop") |>
-      group_by(.data$gene) |>
-      summarise(pos = paste(.data$pos, collapse = "_"),
-                aa = paste(.data$aa, collapse = "_"),
+      group_by(gene) |>
+      summarise(pos = paste(pos, collapse = "_"),
+                aa = paste(aa, collapse = "_"),
                 .groups = "drop")
 
     # behave differently depending on if read count information is available
@@ -602,29 +608,29 @@ long_to_variant <- function(x) {
 
       # concatenate into one string
       ret <- df_gene |>
-        mutate(variant = sprintf("%s:%s:%s", .data$gene, .data$pos, .data$aa)) |>
-        pull(.data$variant) |>
+        mutate(variant = sprintf("%s:%s:%s", gene, pos, aa)) |>
+        pull(variant) |>
         paste(collapse = ";")
 
     } else if (!any(is.na(y1$read_count))) { # yes read count info
 
       # get read counts corresponding to each position
       df_read_count <- y1 |>
-        group_by(.data$gene, .data$pos) |>
-        summarise(read_count = ifelse(.data$phased[1],
-                                      paste(.data$read_count, collapse = "|"),
-                                      paste(.data$read_count, collapse = "/")),
+        group_by(gene, pos) |>
+        summarise(read_count = ifelse(phased[1],
+                                      paste(read_count, collapse = "|"),
+                                      paste(read_count, collapse = "/")),
                   .groups = "drop") |>
-        group_by(.data$gene) |>
-        summarise(pos = paste(.data$pos, collapse = "_"),
-                  read_count = paste(.data$read_count, collapse = "_"),
+        group_by(gene) |>
+        summarise(pos = paste(pos, collapse = "_"),
+                  read_count = paste(read_count, collapse = "_"),
                   .groups = "drop")
 
       # concatenate into one string
       ret <- df_gene |>
         left_join(df_read_count, by = c("gene", "pos")) |>
-        mutate(variant = sprintf("%s:%s:%s:%s", .data$gene, .data$pos, .data$aa, .data$read_count)) |>
-        pull(.data$variant) |>
+        mutate(variant = sprintf("%s:%s:%s:%s", gene, pos, aa, read_count)) |>
+        pull(variant) |>
         paste(collapse = ";")
 
     } else { # invalid read count info
@@ -695,11 +701,11 @@ long_to_position <- function(x) {
 
     # get into string format within each gene
     y1 |>
-      group_by(.data$gene) |>
-      summarise(pos = paste(.data$pos, collapse = "_"),
+      group_by(gene) |>
+      summarise(pos = paste(pos, collapse = "_"),
                 .groups = "drop") |>
-      mutate(variant = sprintf("%s:%s", .data$gene, .data$pos)) |>
-      pull(.data$variant) |>
+      mutate(variant = sprintf("%s:%s", gene, pos)) |>
+      pull(variant) |>
       paste(collapse = ";")
 
   }, x, SIMPLIFY = FALSE) |>
@@ -730,8 +736,8 @@ position_from_variant_string <- function(x) {
 
   mapply(function(y1) {
     y1 |>
-      group_by(.data$gene) |>
-      reframe(pos = unique(.data$pos))
+      group_by(gene) |>
+      reframe(pos = unique(pos))
   }, variant_to_long(x), SIMPLIFY = FALSE) |>
     long_to_position()
 
@@ -796,7 +802,7 @@ order_variant_string <- function(x) {
   check_variant_string(x)
 
   mapply(function(y) {
-    arrange(y, .data$gene, .data$pos, .data$aa)
+    arrange(y, gene, pos, aa)
   }, variant_to_long(x), SIMPLIFY = FALSE) |>
     long_to_variant()
 
@@ -820,7 +826,7 @@ order_position_string <- function(x) {
   check_position_string(x)
 
   mapply(function(y) {
-    arrange(y, .data$gene, .data$pos)
+    arrange(y, gene, pos)
   }, position_to_long(x), SIMPLIFY = FALSE) |>
     long_to_position()
 
@@ -844,10 +850,10 @@ count_unphased_hets <- function(x) {
 
   mapply(function(y1) {
     y1 |>
-      group_by(.data$gene, .data$pos) |>
-      summarise(n = (.data$het[1] == TRUE) & (.data$phased[1] == FALSE),
+      group_by(gene, pos) |>
+      summarise(n = (het[1] == TRUE) & (phased[1] == FALSE),
                 .groups = "drop") |>
-      pull(.data$n) |>
+      pull(n) |>
       sum()
   }, variant_to_long(x))
 }
@@ -870,10 +876,10 @@ count_phased_hets <- function(x) {
 
   mapply(function(y1) {
     y1 |>
-      group_by(.data$gene, .data$pos) |>
-      summarise(n = (.data$het[1] == TRUE) & (.data$phased[1] == TRUE),
+      group_by(gene, pos) |>
+      summarise(n = (het[1] == TRUE) & (phased[1] == TRUE),
                 .groups = "drop") |>
-      pull(.data$n) |>
+      pull(n) |>
       sum()
   }, variant_to_long(x))
 }
@@ -931,7 +937,8 @@ compare_variant_string <- function(target_string, comparison_strings) {
   check_variant_string(comparison_strings)
 
   # get target in long form
-  df_target <- variant_to_long(target_string)[[1]]
+  df_target <- variant_to_long(target_string)[[1]] |>
+    select(gene, pos, aa)
 
   # loop over all comparison strings
   n <- length(comparison_strings)
@@ -943,35 +950,69 @@ compare_variant_string <- function(target_string, comparison_strings) {
     # get this comparison string in long form
     df_comparison <- variant_to_long(comparison_strings[i])[[1]]
 
-    # get if there is a match and if in a het for each locus
-    df_match <- mapply(function(j) {
-      match_pos <- (df_target$gene[j] == df_comparison$gene) &
-        (df_target$pos[j] == df_comparison$pos)
-      match_all <- match_pos & (df_target$aa[j] == df_comparison$aa)
+    # compare target against comparison
+    df_target_match <- df_target |>
+      rowwise() |>
+      summarise(gene = gene[1],
+                pos = pos[1],
+                match = any((gene == df_comparison$gene) &
+                              (pos == df_comparison$pos) &
+                              (aa == df_comparison$aa)),
+                .groups = "drop") |>
+      ungroup()
 
-      c(match = sum(match_all),
-        het = sum(df_comparison$het * match_all),
-        read_num = sum(df_comparison$read_count * match_all),
-        read_denom = sum(df_comparison$read_count * match_pos))
-    }, 1:nrow(df_target), SIMPLIFY = FALSE) |>
-      dplyr::bind_rows()
-
-    # get if a match over all loci, if ambiguous, and the proportion
-    ret$match[i] <- all(df_match$match == 1)
-    if (ret$match[i]) {
-      ret$ambiguous[i] <- (sum(df_match$het) > 1)
-      if (sum(df_match$het) == 0) {
-        ret$prop[i] <- 1
-      } else if (sum(df_match$het) == 1) {
-        w <- which(df_match$het == 1)
-        ret$prop[i] <- df_match$read_num[w] / df_match$read_denom[w]
-      } else {
-        ret$prop[i] <- NA
-      }
-    } else {
-      ret$ambiguous[i] <- FALSE
-      ret$prop[i] <- 0.0
+    # simple exit if not match
+    if (!all(df_target_match$match)) {
+      ret$match[i] <- FALSE
+      ret$ambiguous <- FALSE
+      ret$prop <- 0
+      next
     }
+
+    # compare comparison back against target
+    df_comparison_match <- df_comparison |>
+      rowwise(gene, pos, het, phased, aa, read_count) |>
+      summarise(match = any((gene == df_target$gene) &
+                              (pos == df_target$pos) &
+                              (aa == df_target$aa)),
+                .groups = "drop") |>
+      group_by(gene, pos) |>
+      summarise(het = het[1],
+                phased = phased[1],
+                read_count_total = sum(read_count),
+                read_count = sum(read_count*match),
+                match = any(match),
+                .groups = "drop") |>
+      filter(match)
+
+    # count hets
+    n_phased_het <- sum(df_comparison_match$het * df_comparison_match$phased)
+    n_unphased_het <- sum(df_comparison_match$het * !df_comparison_match$phased)
+
+    # determine if unambiguous match
+    ret$match[i] <- TRUE
+    ret$ambiguous[i] <- ((n_phased_het > 0) + n_unphased_het) > 1
+
+    # get proportion if calculable
+    ret$prop[i] <- NA
+    if (!ret$ambiguous[i]) {
+      if (any(is.na(df_comparison_match$read_count))) {
+        if ((n_phased_het + n_unphased_het) == 0) {
+          ret$prop[i] <- 1
+        }
+      } else {
+        prop <- df_comparison_match$read_count / df_comparison_match$read_count_total
+        if (all(prop == 1)) {
+          ret$prop[i] <- 1
+        } else {
+          u_prop <- unique(prop[prop != 1])
+          if (length(u_prop) == 1) {
+            ret$prop[i] <- u_prop
+          }
+        }
+      }
+    }
+
   }
 
   return(ret)
@@ -1085,8 +1126,8 @@ get_component_variants <- function(x) {
 
       # get amino acids into list nested within data.frame
       df_nested <- variant_list[[i]] |>
-        group_by(.data$gene, .data$pos) |>
-        summarise(aa = list(.data$aa),
+        group_by(gene, pos) |>
+        summarise(aa = list(aa),
                   .groups = "drop")
 
       # get all possible combinations of amino acids
@@ -1098,19 +1139,19 @@ get_component_variants <- function(x) {
       # get all possible variant strings
       components <- df_nested |>
         dplyr::bind_cols(combos) |>
-        select(-.data$aa) |>
+        select(-aa) |>
         pivot_longer(cols = starts_with("combo_"),
                      names_to = "combo",
                      values_to = "aa") |>
-        group_by(.data$combo, .data$gene) |>
-        summarise(pos = paste(.data$pos, collapse = "_"),
-                  aa = paste(.data$aa, collapse = "_"),
+        group_by(combo, gene) |>
+        summarise(pos = paste(pos, collapse = "_"),
+                  aa = paste(aa, collapse = "_"),
                   .groups = "drop") |>
-        mutate(variant = sprintf("%s:%s:%s", .data$gene, .data$pos, .data$aa)) |>
-        group_by(.data$combo) |>
-        summarise(variant = paste(.data$variant, collapse = ";"),
+        mutate(variant = sprintf("%s:%s:%s", gene, pos, aa)) |>
+        group_by(combo) |>
+        summarise(variant = paste(variant, collapse = ";"),
                   .groups = "drop") |>
-        pull(.data$variant)
+        pull(variant)
 
       ret[[i]] <- components
 
@@ -1118,8 +1159,8 @@ get_component_variants <- function(x) {
 
       # get amino acids into list nested within data.frame
       df_nested <- variant_list[[i]] |>
-        group_by(.data$gene, .data$pos) |>
-        summarise(aa = list(.data$aa),
+        group_by(gene, pos) |>
+        summarise(aa = list(aa),
                   .groups = "drop")
 
       # get all phased combinations of amino acids
@@ -1132,20 +1173,20 @@ get_component_variants <- function(x) {
 
       # get all possible variant strings
       components <- df_nested |>
-        select(-.data$aa) |>
+        select(-aa) |>
         dplyr::bind_cols(combos) |>
         pivot_longer(cols = starts_with("combo_"),
                      names_to = "combo",
                      values_to = "aa") |>
-        group_by(.data$combo, .data$gene) |>
-        summarise(pos = paste(.data$pos, collapse = "_"),
-                  aa = paste(.data$aa, collapse = "_"),
+        group_by(combo, gene) |>
+        summarise(pos = paste(pos, collapse = "_"),
+                  aa = paste(aa, collapse = "_"),
                   .groups = "drop") |>
-        mutate(variant = sprintf("%s:%s:%s", .data$gene, .data$pos, .data$aa)) |>
-        group_by(.data$combo) |>
-        summarise(variant = paste(.data$variant, collapse = ";"),
+        mutate(variant = sprintf("%s:%s:%s", gene, pos, aa)) |>
+        group_by(combo) |>
+        summarise(variant = paste(variant, collapse = ";"),
                   .groups = "drop") |>
-        pull(.data$variant)
+        pull(variant)
 
       ret[[i]] <- components
 

@@ -22,12 +22,9 @@ test_that("check for correct matches and mismatches of variant strings and posit
   }
 
   # check that this matches with what we expect
-  match_correct <- 1
-  all.equal(df_variant$expect_match, df_variant$confirm_match)
-  ambiguous_correct <- 1
-  all.equal(df_variant$expect_ambiguous, df_variant$confirm_ambiguous)
-  prop_correct <- 1
-  all.equal(df_variant$expect_prop, df_variant$confirm_prop)
+  match_correct <- isTRUE(all.equal(df_variant$expect_match, df_variant$confirm_match))
+  ambiguous_correct <- isTRUE(all.equal(df_variant$expect_ambiguous, df_variant$confirm_ambiguous))
+  prop_correct <- isTRUE(all.equal(df_variant$expect_prop, df_variant$confirm_prop))
 
   testthat::expect_true(match_correct & ambiguous_correct & prop_correct)
 })
