@@ -14,7 +14,7 @@ the other.
 You can install directly from Github:
 
 ``` r
-devtools::install_github(repo = "mrc-ide/variantstring@1.8.1")
+devtools::install_github(repo = "mrc-ide/variantstring@1.8.2")
 ```
 
 Note the use of the @ symbol to reference a specific tagged version.
@@ -344,4 +344,4 @@ some operations. We can always convert back using `long_to_variant()`.
 
 ## Release history
 
-The current version is 1.8.1, released 16 April 2025.
+The current version is 1.8.2, released 16 April 2025.
