@@ -732,14 +732,14 @@ long_to_position <- function(x) {
 position_from_variant_string <- function(x) {
 
   # checks
-  check_variant_string(x)
+  map_unique(x, check_variant_string)
 
   mapply(function(y1) {
     y1 |>
       group_by(gene) |>
       reframe(pos = unique(pos))
-  }, variant_to_long(x), SIMPLIFY = FALSE) |>
-    long_to_position()
+  }, map_unique(x, variant_to_long), SIMPLIFY = FALSE) |>
+    map_unique(long_to_position)
 
 }
 
@@ -799,12 +799,12 @@ subset_position <- function(position_string, variant_strings) {
 order_variant_string <- function(x) {
 
   # checks
-  check_variant_string(x)
+  map_unique(x, check_variant_string)
 
   mapply(function(y) {
     arrange(y, gene, pos, aa)
-  }, variant_to_long(x), SIMPLIFY = FALSE) |>
-    long_to_variant()
+  }, map_unique(x, variant_to_long), SIMPLIFY = FALSE) |>
+    map_unique(long_to_variant)
 
 }
 
@@ -823,12 +823,12 @@ order_variant_string <- function(x) {
 order_position_string <- function(x) {
 
   # checks
-  check_position_string(x)
+  map_unique(x, check_position_string)
 
   mapply(function(y) {
     arrange(y, gene, pos)
-  }, position_to_long(x), SIMPLIFY = FALSE) |>
-    long_to_position()
+  }, map_unique(x, position_to_long), SIMPLIFY = FALSE) |>
+    map_unique(long_to_position)
 
 }
 
@@ -1217,4 +1217,23 @@ allowed_amino_acids <- function() {
   # read the data and return
   ret <- readRDS(file_path)
   return(ret)
+}
+
+#' Apply a function efficiently to unique elements and map results back to original vector
+#'
+#' This function identifies unique values in a vector, applies a provided function
+#' only to these unique elements, and then maps the results back to match the original vector.
+#' This avoids redundant calculations and is useful for computationally expensive functions.
+#'
+#' @param x A vector of values (numeric, character, factor, etc.).
+#' @param fn A function to be applied to the unique elements of `x`.
+#'
+#' @return A vector of results corresponding to the input vector `x`.
+#' @examples
+#' x <- c("a", "b", "a", "c")
+#' map_unique(x, toupper)
+map_unique <- function(x, fn) {
+  ux <- unique(x)
+  res <- fn(ux)
+  res[match(x, ux)]
 }
