@@ -7,7 +7,7 @@
 position_from_variant_string(x)
 }
 \arguments{
-\item{x}{a character string or vector of character strings.}
+\item{x}{a character string or vector of character strings. Note, these are not internally checked for being valid variant strings, it is up to the user to ensure this (see \code{?check_variant_string}).}
 }
 \description{
 Extract a position string from a variant string by stripping the amino acids.

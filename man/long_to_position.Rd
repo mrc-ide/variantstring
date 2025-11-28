@@ -7,9 +7,9 @@
 long_to_position(x)
 }
 \arguments{
-\item{x}{a list of data.frames.}
+\item{x}{a list of data frames corresponding to position strings.}
 }
 \description{
-Takes a list of data.frames in long form and converts each to position string
+Takes a list of data frames in long form and converts each to position string
 format.
 }

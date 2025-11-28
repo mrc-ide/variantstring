@@ -7,9 +7,9 @@
 subset_position(position_string, variant_strings)
 }
 \arguments{
-\item{position_string}{a single position string.}
+\item{position_string}{a single position string. Note, these are not internally checked for being valid position strings, it is up to the user to ensure this (see \code{?check_position_string}).}
 
-\item{variant_strings}{a variant string or vector of variant strings.}
+\item{variant_strings}{a variant string or vector of variant strings. Note, these are not internally checked for being valid variant strings, it is up to the user to ensure this (see \code{?check_variant_string}).}
 }
 \description{
 Given a vector of variant strings and a single position string, subsets all

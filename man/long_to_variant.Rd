@@ -7,9 +7,9 @@
 long_to_variant(x)
 }
 \arguments{
-\item{x}{a list of data.frames.}
+\item{x}{a list of data frames corresponding to variant strings.}
 }
 \description{
-Takes a list of data.frames in long form and converts each to variant string
+Takes a list of data frames in long form and converts each to variant string
 format.
 }

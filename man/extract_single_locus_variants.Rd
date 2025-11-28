@@ -7,7 +7,7 @@
 extract_single_locus_variants(x)
 }
 \arguments{
-\item{x}{a vector of variant strings.}
+\item{x}{a vector of variant strings. Note, these are not internally checked for being valid variant strings, it is up to the user to ensure this (see \code{?check_variant_string}).}
 }
 \description{
 Takes a vector of variant strings, potentially with information at multiple

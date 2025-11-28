@@ -7,7 +7,7 @@
 get_component_variants(x)
 }
 \arguments{
-\item{x}{a vector of variant strings.}
+\item{x}{a vector of variant strings. Note, these are not internally checked for being valid variant strings, it is up to the user to ensure this (see \code{?check_variant_string}).}
 }
 \description{
 For a variant string with at most one heterozygous locus we can unambiguously

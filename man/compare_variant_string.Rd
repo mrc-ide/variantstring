@@ -8,10 +8,10 @@ compare_variant_string(target_string, comparison_strings)
 }
 \arguments{
 \item{target_string}{a single variant string that we want to compare. Cannot
-contain any heterozygous calls.}
+contain any heterozygous calls. Note, these are not internally checked for being valid variant strings, it is up to the user to ensure this (see \code{?check_variant_string}).}
 
 \item{comparison_strings}{a vector of variant strings against which the
-target is compared.}
+target is compared. Note, these are not internally checked for being valid variant strings, it is up to the user to ensure this (see \code{?check_variant_string}).}
 }
 \description{
 Compares a target variant string against a vector of comparison strings. A
