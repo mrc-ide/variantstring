@@ -19,7 +19,7 @@ other.
 You can install directly from Github:
 
 ``` r
-devtools::install_github(repo = "mrc-ide/variantstring@1.8.3")
+devtools::install_github(repo = "mrc-ide/variantstring@v1.8.3")
 ```
 
 Note the use of the @ symbol to reference a specific tagged version.
