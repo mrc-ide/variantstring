@@ -49,6 +49,7 @@ check_variant_string <- function(x) {
   #     - contains only allowed characters
   # - codon position (second element):
   #     - contains only allowed characters
+  #     - if there are hyphens denoting a range, checks that a single internal hyphen only
   #     - positions are non-zero
   #     - positions are not duplicated
   #     - positions are sorted increasing
@@ -77,23 +78,27 @@ check_variant_string <- function(x) {
   # is character vector
   stopifnot(all(is.character(x)))
 
+  # only work on unique elements in x
+  x_unique <- unique(x)
+  n_unique <- length(x_unique)
+
   # create objects for storing which rows fail. This allows for more
   # informative error messages in which several issues can be listed at once
   # rather than breaking at the first issue
-  n <- length(x)
-  valid <- rep(TRUE, n)
-  reason <- rep(NA, n)
+  valid <- rep(TRUE, n_unique)
+  reason <- rep(NA, n_unique)
 
   # get list of valid amino acid characters. Do this once here to avoid
   # repetition for every element of x
-  IUPAC_df <- allowed_amino_acids()
-  valid_amino_characters <- paste0("^[", paste(IUPAC_df$IUPAC_amino_acid_code, collapse = ""), "_/|]+$")
+  #IUPAC_df <- allowed_amino_acids()
+  #valid_amino_characters <- paste0("^[", paste(IUPAC_df$IUPAC_amino_acid_code, collapse = ""), "_/|]+$")
+  valid_amino_characters <- "^[ACDEFGHIKLMNPQRSTVWY_/|]+$"
 
   # input may be a single string or a vector of strings. Loop through elements
-  for (i in 1:n) {
+  for (i in 1:n_unique) {
 
     # split into genes
-    s1 <- stringr::str_split(x[i], ";", n = Inf, simplify = FALSE)[[1]]
+    s1 <- stringr::str_split(x_unique[i], ";", n = Inf, simplify = FALSE)[[1]]
     n_genes <- length(s1)
 
     if (any(s1 == "")) {
@@ -140,16 +145,32 @@ check_variant_string <- function(x) {
 
       # ------------------------------------------------------------
       # check codon positions
-
-      if (!grepl("^[0-9_]+$", codon_pos_string)) {
+      if (!grepl("^[0-9_]$|^[0-9_][0-9_-]*[0-9_]$", codon_pos_string)) {
         valid[i] <- FALSE
         reason[i] <- sprintf("codon position %s contains invalid characters", codon_pos_string)
         next()
       }
 
-      # split codon position into separate loci and make numeric
-      codon_pos <- stringr::str_split(codon_pos_string, "_", n = Inf, simplify = FALSE)[[1]] |>
-        as.numeric()
+      # split codon position into separate loci
+      codon_pos <- stringr::str_split(codon_pos_string, "_", n = Inf, simplify = FALSE)[[1]]
+
+      # make numeric, dealing with ranges where needed
+      if (any(grepl("-", codon_pos))) {
+        if (any(stringr::str_count(codon_pos, "-") > 1)) {
+          valid[i] <- FALSE
+          reason[i] <- sprintf("codon position %s does not define a valid range", codon_pos)
+          next()
+        }
+        codon_pos <- mapply(function(x) {
+          r <- as.numeric(strsplit(x, "-")[[1]])
+          if (length(r) > 1) {
+            r <- r[1]:r[2]
+          }
+          r
+        }, codon_pos, SIMPLIFY = FALSE) |>
+          unlist()
+      }
+      codon_pos <- as.numeric(codon_pos)
 
       if (any(codon_pos == 0)) {
         valid[i] <- FALSE
@@ -346,7 +367,7 @@ check_variant_string <- function(x) {
     message("The following issues were found:")
     for (i in seq_along(valid)) {
       if (!valid[i]) {
-        message(sprintf("  - entry %s: %s", i, reason[i]))
+        message(sprintf("  - %s: %s", x_unique[i], reason[i]))
       }
     }
 
@@ -380,6 +401,7 @@ check_position_string <- function(x) {
   #     - no duplicated gene names
   # - codon position (second element):
   #     - contains only allowed characters
+  #     - if there are hyphens denoting a range, a single internal hyphen only
   #     - positions are non-zero
   #     - positions are not duplicated
   #     - positions are sorted increasing
@@ -387,15 +409,18 @@ check_position_string <- function(x) {
   # is character vector
   stopifnot(all(is.character(x)))
 
+  # only work on unique elements in x
+  x_unique <- unique(x)
+  n_unique <- length(x_unique)
+
   # create objects for storing which rows fail. This allows for more
   # informative error messages in which several issues can be listed at once
   # rather than breaking at the first issue
-  n <- length(x)
-  valid <- rep(TRUE, n)
-  reason <- rep(NA, n)
+  valid <- rep(TRUE, n_unique)
+  reason <- rep(NA, n_unique)
 
   # input may be a single string or a vector of strings. Loop through elements
-  for (i in 1:n) {
+  for (i in 1:n_unique) {
 
     # split into genes
     s1 <- stringr::str_split(x[i], ";", n = Inf, simplify = FALSE)[[1]]
@@ -448,8 +473,25 @@ check_position_string <- function(x) {
       }
 
       # split codon position into separate loci and make numeric
-      codon_pos <- stringr::str_split(codon_pos_string, "_", n = Inf, simplify = FALSE)[[1]] |>
-        as.numeric()
+      codon_pos <- stringr::str_split(codon_pos_string, "_", n = Inf, simplify = FALSE)[[1]]
+
+      # make numeric, dealing with ranges where needed
+      if (any(grepl("-", codon_pos))) {
+        if (any(stringr::str_count(codon_pos, "-") > 1)) {
+          valid[i] <- FALSE
+          reason[i] <- sprintf("codon position %s does not define a valid range", codon_pos)
+          next()
+        }
+        codon_pos <- mapply(function(x) {
+          r <- as.numeric(strsplit(x, "-")[[1]])
+          if (length(r) > 1) {
+            r <- r[1]:r[2]
+          }
+          r
+        }, codon_pos, SIMPLIFY = FALSE) |>
+          unlist()
+      }
+      codon_pos <- as.numeric(codon_pos)
 
       if (any(codon_pos == 0)) {
         valid[i] <- FALSE
@@ -484,7 +526,7 @@ check_position_string <- function(x) {
     message("The following issues were found:")
     for (i in seq_along(valid)) {
       if (!valid[i]) {
-        message(sprintf("  - entry %s: %s", i, reason[i]))
+        message(sprintf("  - %s: %s", x_unique[i], reason[i]))
       }
     }
 
@@ -509,16 +551,32 @@ check_position_string <- function(x) {
 
 variant_to_long <- function(x) {
 
+  # basic checks
+  stopifnot(is.character(x))
+
+  # work on unique elements in x and map back at end
+  x_unique <- unique(x)
+
   # expand each element into a list
-  ret <- mapply(function(s1) {
+  l_unique <- mapply(function(s1) {
     mapply(function(s2) {
 
       # extract gene name
       gene_name <- s2[1]
 
       # extract codon positions to vector
-      pos_vec <- strsplit(s2[2], "_")[[1]] |>
-        as.numeric()
+      pos_vec <- strsplit(s2[2], "_")[[1]]
+      if (any(grepl("-", pos_vec))) {
+        pos_vec <- mapply(function(x) {
+          r <- as.numeric(x)
+          if (length(r) > 1) {
+            r <- r[1]:r[2]
+          }
+          r
+        }, strsplit(pos_vec, "-"), SIMPLIFY = FALSE) |>
+          unlist()
+      }
+      pos_vec <- as.numeric(pos_vec)
 
       # extract amino acids to list
       aa_list <- mapply(function(s3) {
@@ -560,7 +618,10 @@ variant_to_long <- function(x) {
       return(ret)
     }, strsplit(s1, ":"), SIMPLIFY = FALSE) |>
       dplyr::bind_rows()
-  }, strsplit(x, ";"), SIMPLIFY = FALSE)
+  }, strsplit(x_unique, ";"), SIMPLIFY = FALSE)
+
+  # map uniques back to original
+  ret <- l_unique[match(x, x_unique)]
 
   return(ret)
 }
@@ -581,7 +642,10 @@ long_to_variant <- function(x) {
   # check input is list
   stopifnot(is.list(x))
 
-  ret <- mapply(function(y1) {
+  # work on unique elements in x and map back at end
+  x_unique <- unique(x)
+
+  l_unique <- mapply(function(y1) {
 
     # check inputs
     stopifnot(is.data.frame(y1))
@@ -635,11 +699,11 @@ long_to_variant <- function(x) {
     }
 
     return(ret)
-  }, x, SIMPLIFY = FALSE) |>
+  }, x_unique, SIMPLIFY = FALSE) |>
     unlist()
 
-  # final checks on return object
-  check_variant_string(ret)
+  # map uniques back to original
+  ret <- l_unique[match(x, x_unique)]
 
   return(ret)
 }
@@ -659,14 +723,38 @@ long_to_variant <- function(x) {
 
 position_to_long <- function(x) {
 
+  # basic checks
+  stopifnot(is.character(x))
+
+  # work on unique elements in x and map back at end
+  x_unique <- unique(x)
+
   # expand each element into a list
-  ret <- mapply(function(s1) {
+  l_unique <- mapply(function(s1) {
     mapply(function(s2) {
+
+      # extract codon positions to vector
+      pos_vec <- strsplit(s2[2], "_")[[1]]
+      if (any(grepl("-", pos_vec))) {
+        pos_vec <- mapply(function(x) {
+          r <- as.numeric(x)
+          if (length(r) > 1) {
+            r <- r[1]:r[2]
+          }
+          r
+        }, strsplit(pos_vec, "-"), SIMPLIFY = FALSE) |>
+          unlist()
+      }
+      pos_vec <- as.numeric(pos_vec)
+
       data.frame(gene = s2[1],
-                 pos = as.numeric(strsplit(s2[2], "_")[[1]]))
+                 pos = pos_vec)
     }, strsplit(s1, ":"), SIMPLIFY = FALSE) |>
       dplyr::bind_rows()
-  }, strsplit(x, ";"), SIMPLIFY = FALSE)
+  }, strsplit(x_unique, ";"), SIMPLIFY = FALSE)
+
+  # map uniques back to original
+  ret <- l_unique[match(x, x_unique)]
 
   return(ret)
 }
@@ -687,7 +775,10 @@ long_to_position <- function(x) {
   # check input is list
   stopifnot(is.list(x))
 
-  ret <- mapply(function(y1) {
+  # work on unique elements in x and map back at end
+  x_unique <- unique(x)
+
+  l_unique <- mapply(function(y1) {
 
     # check inputs
     stopifnot(is.data.frame(y1))
@@ -702,11 +793,11 @@ long_to_position <- function(x) {
       pull(variant) |>
       paste(collapse = ";")
 
-  }, x, SIMPLIFY = FALSE) |>
+  }, x_unique, SIMPLIFY = FALSE) |>
     unlist()
 
-  # final checks on return object
-  check_position_string(ret)
+  # map uniques back to original
+  ret <- l_unique[match(x, x_unique)]
 
   return(ret)
 }
@@ -725,12 +816,20 @@ long_to_position <- function(x) {
 
 position_from_variant_string <- function(x) {
 
-  mapply(function(y1) {
+  # work on unique elements in x and map back at end
+  x_unique <- unique(x)
+
+  l_unique <- mapply(function(y1) {
     y1 |>
       group_by(gene) |>
       reframe(pos = unique(pos))
-  }, variant_to_long(x), SIMPLIFY = FALSE) |>
+  }, variant_to_long(x_unique), SIMPLIFY = FALSE) |>
     long_to_position()
+
+  # map uniques back to original
+  ret <- l_unique[match(x, x_unique)]
+
+  return(ret)
 }
 
 #------------------------------------------------
@@ -756,7 +855,10 @@ subset_position <- function(position_string, variant_strings) {
   # get position string in long form
   df_position <- position_to_long(position_string)[[1]]
 
-  ret <- mapply(function(x) {
+  # work on unique variant strings and map back at end
+  v_unique <- unique(variant_strings)
+
+  l_unique <- mapply(function(x) {
     df_diff <- anti_join(df_position, x, by = c("gene", "pos"))
     if (nrow(df_diff) == 0) {
       df_sub <- semi_join(x, df_position, by = c("gene", "pos"))
@@ -765,8 +867,11 @@ subset_position <- function(position_string, variant_strings) {
       ret <- NA
     }
     ret
-  }, variant_to_long(variant_strings), SIMPLIFY = FALSE) |>
+  }, variant_to_long(v_unique), SIMPLIFY = FALSE) |>
     unlist()
+
+  # map uniques back to original
+  ret <- l_unique[match(variant_strings, v_unique)]
 
   return(ret)
 }
@@ -786,10 +891,18 @@ subset_position <- function(position_string, variant_strings) {
 
 order_variant_string <- function(x) {
 
-  mapply(function(y) {
+  # work on unique x and map back at end
+  x_unique <- unique(x)
+
+  l_unique <- mapply(function(y) {
     arrange(y, gene, pos, aa)
-  }, variant_to_long(x), SIMPLIFY = FALSE) |>
+  }, variant_to_long(x_unique), SIMPLIFY = FALSE) |>
     long_to_variant()
+
+  # map uniques back to original
+  ret <- l_unique[match(x, x_unique)]
+
+  return(ret)
 }
 
 #------------------------------------------------
@@ -806,10 +919,18 @@ order_variant_string <- function(x) {
 
 order_position_string <- function(x) {
 
-  mapply(function(y) {
+  # work on unique x and map back at end
+  x_unique <- unique(x)
+
+  l_unique <- mapply(function(y) {
     arrange(y, gene, pos)
-  }, position_to_long(x), SIMPLIFY = FALSE) |>
+  }, position_to_long(x_unique), SIMPLIFY = FALSE) |>
     long_to_position()
+
+  # map uniques back to original
+  ret <- l_unique[match(x, x_unique)]
+
+  return(ret)
 }
 
 #------------------------------------------------
@@ -825,14 +946,22 @@ order_position_string <- function(x) {
 
 count_unphased_hets <- function(x) {
 
-  mapply(function(y1) {
+  # work on unique x and map back at end
+  x_unique <- unique(x)
+
+  h_unique <- mapply(function(y1) {
     y1 |>
       group_by(gene, pos) |>
       summarise(n = (het[1] == TRUE) & (phased[1] == FALSE),
                 .groups = "drop") |>
       pull(n) |>
       sum()
-  }, variant_to_long(x))
+  }, variant_to_long(x_unique))
+
+  # map uniques back to original
+  ret <- h_unique[match(x, x_unique)]
+
+  return(ret)
 }
 
 #------------------------------------------------
@@ -848,14 +977,22 @@ count_unphased_hets <- function(x) {
 
 count_phased_hets <- function(x) {
 
-  mapply(function(y1) {
+  # work on unique x and map back at end
+  x_unique <- unique(x)
+
+  h_unique <- mapply(function(y1) {
     y1 |>
       group_by(gene, pos) |>
       summarise(n = (het[1] == TRUE) & (phased[1] == TRUE),
                 .groups = "drop") |>
       pull(n) |>
       sum()
-  }, variant_to_long(x))
+  }, variant_to_long(x_unique))
+
+  # map uniques back to original
+  ret <- h_unique[match(x, x_unique)]
+
+  return(ret)
 }
 
 #------------------------------------------------
@@ -870,11 +1007,19 @@ count_phased_hets <- function(x) {
 
 drop_read_counts <- function(x) {
 
-  mapply(function(y) {
+  # work on unique x and map back at end
+  x_unique <- unique(x)
+
+  l_unique <- mapply(function(y) {
     y$read_count <- NA
     y
-  }, variant_to_long(x), SIMPLIFY = FALSE) |>
+  }, variant_to_long(x_unique), SIMPLIFY = FALSE) |>
     long_to_variant()
+
+  # map uniques back to original
+  ret <- l_unique[match(x, x_unique)]
+
+  return(ret)
 }
 
 #------------------------------------------------
@@ -909,15 +1054,18 @@ compare_variant_string <- function(target_string, comparison_strings) {
   df_target <- variant_to_long(target_string)[[1]] |>
     select(gene, pos, aa)
 
-  # loop over all comparison strings
-  n <- length(comparison_strings)
-  ret <- data.frame(match = rep(NA, n),
-                    ambiguous = NA,
-                    prop = NA)
-  for (i in 1:n) {
+  # work on unique comparison_strings and map back at end
+  c_unique <- unique(comparison_strings)
+
+  # loop over all unique comparison strings
+  n_unique <- length(c_unique)
+  df_unique <- data.frame(match = rep(NA, n_unique),
+                          ambiguous = NA,
+                          prop = NA)
+  for (i in 1:n_unique) {
 
     # get this comparison string in long form
-    df_comparison <- variant_to_long(comparison_strings[i])[[1]]
+    df_comparison <- variant_to_long(c_unique[i])[[1]]
 
     # compare target against comparison
     df_target_match <- df_target |>
@@ -932,9 +1080,9 @@ compare_variant_string <- function(target_string, comparison_strings) {
 
     # simple exit if not match
     if (!all(df_target_match$match)) {
-      ret$match[i] <- FALSE
-      ret$ambiguous[i] <- FALSE
-      ret$prop[i] <- 0
+      df_unique$match[i] <- FALSE
+      df_unique$ambiguous[i] <- FALSE
+      df_unique$prop[i] <- 0
       next
     }
 
@@ -959,30 +1107,33 @@ compare_variant_string <- function(target_string, comparison_strings) {
     n_unphased_het <- sum(df_comparison_match$het * !df_comparison_match$phased)
 
     # determine if unambiguous match
-    ret$match[i] <- TRUE
-    ret$ambiguous[i] <- ((n_phased_het > 0) + n_unphased_het) > 1
+    df_unique$match[i] <- TRUE
+    df_unique$ambiguous[i] <- ((n_phased_het > 0) + n_unphased_het) > 1
 
     # get proportion if calculable
-    ret$prop[i] <- NA
-    if (!ret$ambiguous[i]) {
+    df_unique$prop[i] <- NA
+    if (!df_unique$ambiguous[i]) {
       if (any(is.na(df_comparison_match$read_count))) {
         if ((n_phased_het + n_unphased_het) == 0) {
-          ret$prop[i] <- 1
+          df_unique$prop[i] <- 1
         }
       } else {
         prop <- df_comparison_match$read_count / df_comparison_match$read_count_total
         if (all(prop == 1)) {
-          ret$prop[i] <- 1
+          df_unique$prop[i] <- 1
         } else {
           u_prop <- unique(prop[prop != 1])
           if (length(u_prop) == 1) {
-            ret$prop[i] <- u_prop
+            df_unique$prop[i] <- u_prop
           }
         }
       }
     }
 
   }
+
+  # map uniques back to original
+  ret <- df_unique[match(comparison_strings, c_unique),]
 
   return(ret)
 }
@@ -1009,22 +1160,28 @@ compare_position_string <- function(target_string, comparison_strings) {
   # get target in long form
   df_target <- position_to_long(target_string)[[1]]
 
+  # work on unique comparison_strings and map back at end
+  c_unique <- unique(comparison_strings)
+
   # get comparisons in long form
-  list_comparison <- position_from_variant_string(comparison_strings) |>
+  list_comparison <- position_from_variant_string(c_unique) |>
     position_to_long()
 
-  # loop over all comparison strings
-  n <- length(comparison_strings)
-  ret <- rep(NA, n)
-  for (i in 1:n) {
+  # loop over all unique comparison strings
+  n_unique <- length(c_unique)
+  ret_unique <- rep(NA, n_unique)
+  for (i in 1:n_unique) {
 
-    ret[i] <- mapply(function(j) {
+    ret_unique[i] <- mapply(function(j) {
       any((df_target$gene[j] == list_comparison[[i]]$gene) &
         (df_target$pos[j] == list_comparison[[i]]$pos))
     }, 1:nrow(df_target), SIMPLIFY = FALSE) |>
       unlist() |>
       all()
   }
+
+  # map uniques back to original
+  ret <- ret_unique[match(comparison_strings, c_unique)]
 
   return(ret)
 }
@@ -1044,9 +1201,15 @@ compare_position_string <- function(target_string, comparison_strings) {
 
 extract_single_locus_variants <- function(x) {
 
-  mapply(function(y) {
+  # work on unique x and map back at end
+  x_unique <- unique(x)
+
+  l_unique <- mapply(function(y) {
     sprintf("%s:%s:%s", y$gene, y$pos, y$aa)
-  }, variant_to_long(x), SIMPLIFY = FALSE)
+  }, variant_to_long(x_unique), SIMPLIFY = FALSE)
+
+  # map uniques back to original
+  ret <- l_unique[match(x, x_unique)]
 }
 
 #------------------------------------------------
@@ -1066,21 +1229,24 @@ extract_single_locus_variants <- function(x) {
 
 get_component_variants <- function(x) {
 
+  # work on unique x and map back at end
+  x_unique <- unique(x)
+
   # focus on unambiguous
-  unphased_hets <- count_unphased_hets(x)
-  phased_hets <- count_phased_hets(x)
+  unphased_hets <- count_unphased_hets(x_unique)
+  phased_hets <- count_phased_hets(x_unique)
 
   # get all variants into long format and drop any read counts
   variant_list <- mapply(function(y) {
     y$read_count <- NA
     y
-  }, variant_to_long(x), SIMPLIFY = FALSE)
+  }, variant_to_long(x_unique), SIMPLIFY = FALSE)
 
-  n <- length(x)
-  ret <- replicate(n, NA, simplify = FALSE)
-  for (i in 1:n) {
+  n_unique <- length(x_unique)
+  df_ret <- replicate(n_unique, NA, simplify = FALSE)
+  for (i in 1:n_unique) {
     if ((unphased_hets[i] == 0) & (phased_hets[i] == 0)) {
-      ret[[i]] <- long_to_variant(variant_list[i])
+      df_ret[[i]] <- long_to_variant(variant_list[i])
 
     } else if ((unphased_hets[i] == 1) && (phased_hets[i] == 0)) {
 
@@ -1113,7 +1279,7 @@ get_component_variants <- function(x) {
                   .groups = "drop") |>
         pull(variant)
 
-      ret[[i]] <- components
+      df_ret[[i]] <- components
 
     } else if ((unphased_hets[i] == 0) && (phased_hets[i] > 0)) {
 
@@ -1148,13 +1314,16 @@ get_component_variants <- function(x) {
                   .groups = "drop") |>
         pull(variant)
 
-      ret[[i]] <- components
+      df_ret[[i]] <- components
 
     } else {
-      ret[[i]] <- NA
+      df_ret[[i]] <- NA
 
     }
   }
+
+  # map uniques back to original
+  ret <- df_ret[match(x, x_unique)]
 
   return(ret)
 }
