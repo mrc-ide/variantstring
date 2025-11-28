@@ -3,6 +3,11 @@
 
 # variantstring
 
+[![master
+checks](https://github.com/mrc-ide/variantstring/workflows/checks_main/badge.svg)](https://github.com/mrc-ide/variantstring/actions)
+[![develop
+checks](https://github.com/mrc-ide/variantstring/workflows/checks_develop/badge.svg)](https://github.com/mrc-ide/variantstring/actions)
+
 Tools for working with *variant string format*, a convenient format for
 encoding multi-locus genotypes. Functionalities include converting into
 and out of variant string format, subsetting based on genomic position,
