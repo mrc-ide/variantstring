@@ -7,7 +7,7 @@
 position_to_long(x)
 }
 \arguments{
-\item{x}{a vector of position strings.}
+\item{x}{a vector of position strings. Note, these are not internally checked for being valid position strings, it is up to the user to ensure this (see \code{?check_position_string}).}
 }
 \description{
 Takes a vector of position strings and expands into a list of data.frames

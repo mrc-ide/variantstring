@@ -7,7 +7,7 @@
 order_variant_string(x)
 }
 \arguments{
-\item{x}{a variant string or vector of variant strings.}
+\item{x}{a variant string or vector of variant strings. Note, these are not internally checked for being valid variant strings, it is up to the user to ensure this (see \code{?check_variant_string}).}
 }
 \description{
 Reorders a variant string in alphabetical order of genes, and then
