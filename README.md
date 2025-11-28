@@ -3,24 +3,28 @@
 
 # variantstring
 
-This R package that defines *variant string format*, a convenient format
-for encoding multi-locus genotypes. Functionalities include converting
-into and out of variant string format, subsetting based on genomic
-position, and comparing two variant strings to see if one is a subset of
-the other.
+[![master
+checks](https://github.com/mrc-ide/variantstring/workflows/checks_main/badge.svg)](https://github.com/mrc-ide/variantstring/actions)
+[![develop
+checks](https://github.com/mrc-ide/variantstring/workflows/checks_develop/badge.svg)](https://github.com/mrc-ide/variantstring/actions)
+
+Tools for working with *variant string format*, a convenient format for
+encoding multi-locus genotypes. Functionalities include converting into
+and out of variant string format, subsetting based on genomic position,
+and comparing two variant strings to see if one is a subset of the
+other.
 
 ## Installation
 
 You can install directly from Github:
 
 ``` r
-devtools::install_github(repo = "mrc-ide/variantstring@1.8.2")
+devtools::install_github(repo = "mrc-ide/variantstring@1.8.3")
 ```
 
 Note the use of the @ symbol to reference a specific tagged version.
 This is highly recommended as the package is still in development and
-backwards compatibility is not guaranteed. See the end of this page for
-the most recent version number.
+backwards compatibility is not guaranteed.
 
 ## Variant string format
 
@@ -49,12 +53,15 @@ be left out.
 For example, `pfcrt:72_73:C_V` specifies that at codon 72 a C (Cysteine)
 was observed, and at codon 73 a V (Valine) was observed. Codon positions
 must be in increasing numerical order. There is no limit to the number
-of loci that are allowed.
+of loci that are allowed, although please keep in mind that this format
+was designed for short variants (100 positions or less) and larger
+haplotypes may become very slow. For larger haplotypes we recommend
+other existing file formats.
 
 Underscores can be omitted between amino acids to give a more concise
 notation, for example `pfcrt:72_73:CV` is equivalent to
 `pfcrt:72_73:C_V`. However, underscores cannot be omitted between codon
-positions.
+positions because this would make them impossible to resolve.
 
 If read counts are present then these must correspond to each of the
 codon positions, for example `pfcrt:72_73:CV:50_55`.
@@ -77,7 +84,8 @@ When read counts are present, the counts for each allele must mirror the
 format of the amino acids. For example,
 `pfcrt:72_73:C/S/A_V/A:60/30/10_45/55` is a valid string that specifies
 read counts of {C=60, S=30, A=10} at codon 72 and {V=45, A=55} at codon
-73.
+73. These counts do not need to add to the same number, i.e. coverage
+may differ between loci.
 
 #### 4. Phased mixed calls are indicated by \|
 
@@ -107,8 +115,8 @@ two phased and three unphased alleles.
 
 Phased and unphased alleles cannot be combined within a single locus.
 For example, `pfcrt:72:C|S/A` is **not** a valid string. This type of
-partial phasing can arise in real data, but unfortunately cannot be
-encoded in variant string format.
+partial phasing can arise in real data, but unfortunately is beyond the
+scope of variant string format.
 
 Finally, if read counts are present they must mirror the format of the
 amino acids. For example
@@ -120,7 +128,9 @@ For example, `pfcrt:72:C;pfmdr-1:86:Y` specifies that in the *pfcrt*
 gene at codon 72 a C was observed, and in the *pfmdr-1* gene at codon 86
 a Y was observed. In this way, multi-locus genotypes can be encoded
 spanning different parts of the genome, including over different
-chromosomes.
+chromosomes. This is mainly useful if encoding phased information
+between genes is important, otherwise you might be better off splitting
+this information into two strings.
 
 There is no limit to the number of genes that can be encoded. The order
 of gene names does not matter as genes are first sorted alphabetically
@@ -149,7 +159,7 @@ data_string <- c("dhps:437:G",
 ```
 
 All of these samples were successfully sequenced at *dhps* locus 437,
-and some were also sequenced at locus 540. Some contain heterozygous
+and most were also sequenced at locus 540. Some contain heterozygous
 calls while others contain only homozygous calls.
 
 Our first question might be; **what unique genotypes are present within
@@ -164,7 +174,9 @@ this dataset?**
 - The fourth sample contains two heterozygous sites, meaning **it is no
   longer possible to establish which genotypes make up this sample**. It
   could be composed of `A_K` coming together with `G_E`, or by `A_E`
-  coming together with `G_K`, or by some combination of these.
+  coming together with `G_K`, or by some combination of these. Whenever
+  there are two or more unphased heterozygous loci we lose the ability
+  to unambiguously resolve the component genotypes.
 
 In code, we can use the `get_component_variants()` function:
 
@@ -299,7 +311,7 @@ results above, we can say that:
 - The `dhps:437_540:G_K` variant is present at between 2/3 and 3/3
   samples. The prevalence is in the range 67%-100%.
 - The `dhps:437_540:G_E` variant is present at between 1/3 and 2/3
-  samples. The prevalence is in the range 50%-67%.
+  samples. The prevalence is in the range 33%-67%.
 
 We can see that prevalence calculation is not always straightforward due
 to ambiguous matches, and requires a judgement call on how best to use
@@ -342,6 +354,26 @@ variant_to_long("pfcrt:72_73_74_75_76:CVIE_K/T:54_34_64_29_54/64;pfmdr-1:86_184:
 This contains the same information, but may be easier to work with for
 some operations. We can always convert back using `long_to_variant()`.
 
-## Release history
+### Summary and word of caution
 
-The current version is 1.8.2, released 16 April 2025.
+variantstring is a narrowly focused package that provides utility
+functions for working with a specific class of genetic data (actually
+technically amino-acid data). By combining these building blocks, you
+can perform more advanced tasks, such as estimating the prevalence of
+multi-locus haplotypes, even when samples contain mixed infections.
+
+That said, variantstring is not designed for efficiency, either in file
+size or computational speed. Its purpose is to act as a convenience
+format: something lightweight and human-interpretable, useful when
+manually extracting genotype information from papers, or when storing
+aggregate counts at a small number of loci rather than full
+individual-level data.
+
+Some efficiency considerations depend on how you compose the functions.
+For example, functions such as assume that the input is already a valid
+variant string; they do not re-validate the format because can be
+expensive and is better run once at the start of your workflow.
+Likewise, when constructing longer analysis pipelines, it is often best
+to unpack variant strings early using , work in long format using
+tidyverse-style operations, and then reassemble the strings at the end
+with .

@@ -7,7 +7,7 @@
 count_unphased_hets(x)
 }
 \arguments{
-\item{x}{a variant string or vector of variant strings.}
+\item{x}{a variant string or vector of variant strings. Note, these are not internally checked for being valid variant strings, it is up to the user to ensure this (see \code{?check_variant_string}).}
 }
 \description{
 Count the number of unphased heterozygous loci in each variant string. Return
