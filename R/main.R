@@ -85,7 +85,7 @@ check_variant_string <- function(x) {
   reason <- rep(NA, n)
 
   # get list of valid amino acid characters. Do this once here to avoid
-  # repetition for element of x
+  # repetition for every element of x
   IUPAC_df <- allowed_amino_acids()
   valid_amino_characters <- paste0("^[", paste(IUPAC_df$IUPAC_amino_acid_code, collapse = ""), "_/|]+$")
 
@@ -174,7 +174,7 @@ check_variant_string <- function(x) {
 
       if (!grepl(valid_amino_characters, codon_aa_string)) {
         valid[i] <- FALSE
-        reason[i] <- "amino acid sequence contains invalid characters. See ?allowed_amino_acids()"
+        reason[i] <- "amino acid sequence contains invalid characters. See ?variantstring::allowed_amino_acids()"
         next()
       }
 
@@ -501,16 +501,13 @@ check_position_string <- function(x) {
 #' Takes a vector of variant strings and expands into a list of data.frames
 #' containing the same information in long form.
 #'
-#' @param x a vector of variant strings.
+#' @param x a vector of variant strings. Note, these are not internally checked for being valid variant strings, it is up to the user to ensure this (see \code{?check_variant_string}).
 #'
 #' @import dplyr
 #'
 #' @export
 
 variant_to_long <- function(x) {
-
-  # checks
-  check_variant_string(x)
 
   # expand each element into a list
   ret <- mapply(function(s1) {
@@ -572,10 +569,10 @@ variant_to_long <- function(x) {
 #' @title Take long form information and convert to variant string
 #'
 #' @description
-#' Takes a list of data.frames in long form and converts each to variant string
+#' Takes a list of data frames in long form and converts each to variant string
 #' format.
 #'
-#' @param x a list of data.frames.
+#' @param x a list of data frames corresponding to variant strings.
 #'
 #' @export
 
@@ -654,16 +651,13 @@ long_to_variant <- function(x) {
 #' Takes a vector of position strings and expands into a list of data.frames
 #' containing the same information in long form.
 #'
-#' @param x a vector of position strings.
+#' @param x a vector of position strings. Note, these are not internally checked for being valid position strings, it is up to the user to ensure this (see \code{?check_position_string}).
 #'
 #' @import dplyr
 #'
 #' @export
 
 position_to_long <- function(x) {
-
-  # checks
-  check_position_string(x)
 
   # expand each element into a list
   ret <- mapply(function(s1) {
@@ -681,10 +675,10 @@ position_to_long <- function(x) {
 #' @title Take long form information and convert to position string
 #'
 #' @description
-#' Takes a list of data.frames in long form and converts each to position string
+#' Takes a list of data frames in long form and converts each to position string
 #' format.
 #'
-#' @param x a list of data.frames.
+#' @param x a list of data frames corresponding to position strings.
 #'
 #' @export
 
@@ -723,7 +717,7 @@ long_to_position <- function(x) {
 #' @description
 #' Extract a position string from a variant string by stripping the amino acids.
 #'
-#' @param x a character string or vector of character strings.
+#' @param x a character string or vector of character strings. Note, these are not internally checked for being valid variant strings, it is up to the user to ensure this (see \code{?check_variant_string}).
 #'
 #' @import dplyr
 #'
@@ -731,16 +725,12 @@ long_to_position <- function(x) {
 
 position_from_variant_string <- function(x) {
 
-  # checks
-  check_variant_string(x)
-
   mapply(function(y1) {
     y1 |>
       group_by(gene) |>
       reframe(pos = unique(pos))
   }, variant_to_long(x), SIMPLIFY = FALSE) |>
     long_to_position()
-
 }
 
 #------------------------------------------------
@@ -751,8 +741,8 @@ position_from_variant_string <- function(x) {
 #' variant strings to only the genes and codons in the position string. Retains
 #' read counts at these positions if present.
 #'
-#' @param position_string a single position string.
-#' @param variant_strings a variant string or vector of variant strings.
+#' @param position_string a single position string. Note, these are not internally checked for being valid position strings, it is up to the user to ensure this (see \code{?check_position_string}).
+#' @param variant_strings a variant string or vector of variant strings. Note, these are not internally checked for being valid variant strings, it is up to the user to ensure this (see \code{?check_variant_string}).
 #'
 #' @import dplyr
 #'
@@ -761,9 +751,7 @@ position_from_variant_string <- function(x) {
 subset_position <- function(position_string, variant_strings) {
 
   # checks
-  check_position_string(position_string)
   stopifnot(length(position_string) == 1)
-  check_variant_string(variant_strings)
 
   # get position string in long form
   df_position <- position_to_long(position_string)[[1]]
@@ -792,20 +780,16 @@ subset_position <- function(position_string, variant_strings) {
 #' useful when checking for duplicated strings as the same information may be
 #' presented in a different order.
 #'
-#' @param x a variant string or vector of variant strings.
+#' @param x a variant string or vector of variant strings. Note, these are not internally checked for being valid variant strings, it is up to the user to ensure this (see \code{?check_variant_string}).
 #'
 #' @export
 
 order_variant_string <- function(x) {
 
-  # checks
-  check_variant_string(x)
-
   mapply(function(y) {
     arrange(y, gene, pos, aa)
   }, variant_to_long(x), SIMPLIFY = FALSE) |>
     long_to_variant()
-
 }
 
 #------------------------------------------------
@@ -816,20 +800,16 @@ order_variant_string <- function(x) {
 #' when checking for duplicated strings as the same information may be presented
 #' in a different order.
 #'
-#' @param x a position string or vector of position strings.
+#' @param x a position string or vector of position strings. Note, these are not internally checked for being valid position strings, it is up to the user to ensure this (see \code{?check_position_string}).
 #'
 #' @export
 
 order_position_string <- function(x) {
 
-  # checks
-  check_position_string(x)
-
   mapply(function(y) {
     arrange(y, gene, pos)
   }, position_to_long(x), SIMPLIFY = FALSE) |>
     long_to_position()
-
 }
 
 #------------------------------------------------
@@ -839,14 +819,11 @@ order_position_string <- function(x) {
 #' Count the number of unphased heterozygous loci in each variant string. Return
 #' the number as a vector.
 #'
-#' @param x a variant string or vector of variant strings.
+#' @param x a variant string or vector of variant strings. Note, these are not internally checked for being valid variant strings, it is up to the user to ensure this (see \code{?check_variant_string}).
 #'
 #' @export
 
 count_unphased_hets <- function(x) {
-
-  # checks
-  check_variant_string(x)
 
   mapply(function(y1) {
     y1 |>
@@ -865,14 +842,11 @@ count_unphased_hets <- function(x) {
 #' Count the number of phased heterozygous loci in each variant string. Return
 #' the number as a vector.
 #'
-#' @param x a variant string or vector of variant strings.
+#' @param x a variant string or vector of variant strings. Note, these are not internally checked for being valid variant strings, it is up to the user to ensure this (see \code{?check_variant_string}).
 #'
 #' @export
 
 count_phased_hets <- function(x) {
-
-  # checks
-  check_variant_string(x)
 
   mapply(function(y1) {
     y1 |>
@@ -890,14 +864,11 @@ count_phased_hets <- function(x) {
 #' @description
 #' Takes a vector of variant strings and strips and information on read counts.
 #'
-#' @param x a variant string or vector of variant strings.
+#' @param x a variant string or vector of variant strings. Note, these are not internally checked for being valid variant strings, it is up to the user to ensure this (see \code{?check_variant_string}).
 #'
 #' @export
 
 drop_read_counts <- function(x) {
-
-  # checks
-  check_variant_string(x)
 
   mapply(function(y) {
     y$read_count <- NA
@@ -918,9 +889,9 @@ drop_read_counts <- function(x) {
 #' but a second output also flags this as an ambiguous match.
 #'
 #' @param target_string a single variant string that we want to compare. Cannot
-#'   contain any heterozygous calls.
+#'   contain any heterozygous calls. Note, these are not internally checked for being valid variant strings, it is up to the user to ensure this (see \code{?check_variant_string}).
 #' @param comparison_strings a vector of variant strings against which the
-#'   target is compared.
+#'   target is compared. Note, these are not internally checked for being valid variant strings, it is up to the user to ensure this (see \code{?check_variant_string}).
 #'
 #' @import dplyr
 #'
@@ -929,12 +900,10 @@ drop_read_counts <- function(x) {
 compare_variant_string <- function(target_string, comparison_strings) {
 
   # checks
-  check_variant_string(target_string)
   stopifnot(length(target_string) == 1)
   if ((count_unphased_hets(target_string) > 0) || (count_phased_hets(target_string) > 0)) {
     stop("target string cannot contain any heterozygous loci")
   }
-  check_variant_string(comparison_strings)
 
   # get target in long form
   df_target <- variant_to_long(target_string)[[1]] |>
@@ -1026,18 +995,16 @@ compare_variant_string <- function(target_string, comparison_strings) {
 #' match is found if every codon position in every gene of the target is also
 #' found within the comparison (irrespective of the observed amino acids).
 #'
-#' @param target_string a single position string that we want to compare.
+#' @param target_string a single position string that we want to compare. Note, these are not internally checked for being valid position strings, it is up to the user to ensure this (see \code{?check_position_string}).
 #' @param comparison_strings a vector of variant strings against which the
-#'   target is compared.
+#'   target is compared. Note, these are not internally checked for being valid variant strings, it is up to the user to ensure this (see \code{?check_variant_string}).
 #'
 #' @export
 
 compare_position_string <- function(target_string, comparison_strings) {
 
   # checks
-  check_position_string(target_string)
   stopifnot(length(target_string) == 1)
-  check_variant_string(comparison_strings)
 
   # get target in long form
   df_target <- position_to_long(target_string)[[1]]
@@ -1071,19 +1038,15 @@ compare_position_string <- function(target_string, comparison_strings) {
 #' unique single-locus variants within the input. For example, crt:72_73:C_N/V
 #' can be extracted to crt:72:C, crt:73:N, and crt:73:V.
 #'
-#' @param x a vector of variant strings.
+#' @param x a vector of variant strings. Note, these are not internally checked for being valid variant strings, it is up to the user to ensure this (see \code{?check_variant_string}).
 #'
 #' @export
 
 extract_single_locus_variants <- function(x) {
 
-  # checks
-  check_variant_string(x)
-
   mapply(function(y) {
     sprintf("%s:%s:%s", y$gene, y$pos, y$aa)
   }, variant_to_long(x), SIMPLIFY = FALSE)
-
 }
 
 #------------------------------------------------
@@ -1094,7 +1057,7 @@ extract_single_locus_variants <- function(x) {
 #' define the genotypes that are present in this mixture. This function returns
 #' all such component genotypes.
 #'
-#' @param x a vector of variant strings.
+#' @param x a vector of variant strings. Note, these are not internally checked for being valid variant strings, it is up to the user to ensure this (see \code{?check_variant_string}).
 #'
 #' @importFrom tidyr pivot_longer
 #' @import dplyr
@@ -1102,9 +1065,6 @@ extract_single_locus_variants <- function(x) {
 #' @export
 
 get_component_variants <- function(x) {
-
-  # check
-  check_variant_string(x)
 
   # focus on unambiguous
   unphased_hets <- count_unphased_hets(x)
