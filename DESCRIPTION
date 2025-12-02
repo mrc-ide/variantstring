@@ -1,7 +1,7 @@
 Package: variantstring
 Type: Package
 Title: Functions for working with variant string format
-Version: 1.8.3
+Version: 1.8.4
 Authors@R: c(
     person("Bob", "Verity", email = "r.verity@imperial.ac.uk", role = c("aut", "cre"))
     )
