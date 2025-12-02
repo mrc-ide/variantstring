@@ -859,12 +859,11 @@ subset_position <- function(position_string, variant_strings) {
   v_unique <- unique(variant_strings)
 
   l_unique <- mapply(function(x) {
-    df_diff <- anti_join(df_position, x, by = c("gene", "pos"))
-    if (nrow(df_diff) == 0) {
-      df_sub <- semi_join(x, df_position, by = c("gene", "pos"))
-      ret <- long_to_variant(list(df_sub))
-    } else {
+    df_join <- inner_join(df_position, x, by = c("gene", "pos"))
+    if (nrow(df_join) == 0) {
       ret <- NA
+    } else {
+      ret <- long_to_variant(list(df_join))
     }
     ret
   }, variant_to_long(v_unique), SIMPLIFY = FALSE) |>
