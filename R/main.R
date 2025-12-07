@@ -2,28 +2,13 @@
 # avoids "no visible bindings" warnings
 if (getRversion() >= "2.15.1") {
   utils::globalVariables(c("gene", "pos", "aa", "het", "phased", "read_count",
-                           "combo", "variant"))
+                           "combo", "variant", "n_aa.x", "n_aa.y",
+                           "het.x", "het.y",
+                           "phased.x", "phased.y",
+                           "aa.x", "aa.y",
+                           "read_count.x", "read_count.y",
+                           "n_aa"))
 }
-
-# --- FUNCTION LIST ---
-# check_variant_string
-# check_position_string
-# variant_to_long
-# long_to_variant
-# position_to_long
-# long_to_position
-# position_from_variant_string
-# subset_position
-# order_variant_string
-# order_position_string
-# count_unphased_hets
-# count_phased_hets
-# drop_read_counts
-# compare_variant_string
-# compare_position_string
-# extract_single_locus_variants
-# get_component_variants
-# allowed_amino_acids
 
 #------------------------------------------------
 #' @title Check for a valid variant string
@@ -1328,6 +1313,48 @@ get_component_variants <- function(x) {
   ret <- df_ret[match(x, x_unique)]
 
   return(ret)
+}
+
+#------------------------------------------------
+#' @title Overlay one variant string onto another
+#'
+#' @description
+#' All the positions and amino-acids from the first variant are combined with
+#' the second, overwriting where positions are the same.
+#'
+#' @details
+#' Note, inputs are not internally checked for being valid variant strings, it is up to the user to ensure this (see \code{?check_variant_string}).
+#'
+#' @param var1 the first variant string, which overwrites in the case of shared positions.
+#' @param var2 the second variant string, which is overwritten in the case of shared positions.
+#'
+#' @import dplyr
+#'
+#' @export
+
+overlay_variant <- function(var1, var2) {
+
+  mapply(function(x, y) {
+    if (is.na(x) & is.na(y)) {
+      return(NA)
+    }
+    if (is.na(x)) {
+      return(y)
+    }
+    if (is.na(y)) {
+      return(x)
+    }
+    full_join(variant_to_long(x)[[1]], variant_to_long(y)[[1]], by = join_by(gene, pos)) |>
+      mutate(n_aa = coalesce(n_aa.x, n_aa.y),
+             het = coalesce(het.x, het.y),
+             phased = coalesce(phased.x, phased.y),
+             aa = coalesce(aa.x, aa.y),
+             read_count = coalesce(read_count.x, read_count.y)) |>
+      select(gene, pos, n_aa, het, phased, aa, read_count) |>
+      list() |>
+      long_to_variant()
+  }, var1, var2)
+
 }
 
 #------------------------------------------------
