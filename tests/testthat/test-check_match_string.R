@@ -1,9 +1,17 @@
 
 test_that("check for correct matches and mismatches of variant strings and position strings", {
 
-  # read data.frame from inst/extdata directory
-  file_path <- system.file("extdata", "match_string_tests.csv", package = "variantstring")
-  df_string <- read.csv(file_path)
+  # read test cases from the testdata directory. readr::read_csv is used
+  # (rather than read.csv) as it transparently strips any byte-order mark, which
+  # would otherwise corrupt the first column name
+  file_path <- testthat::test_path("testdata", "match_string_tests.csv")
+  df_string <- readr::read_csv(file_path, show_col_types = FALSE)
+
+  # guard against a silent fixture-loading failure: if the file cannot be read
+  # as expected then fail loudly here rather than testing nothing
+  testthat::expect_true(all(c("target_string", "comparison_string", "position_string",
+                              "expect_match", "expect_ambiguous", "expect_prop") %in% names(df_string)))
+  testthat::expect_gt(nrow(df_string), 0)
 
   # subset to variant strings
   df_variant <- df_string |>
